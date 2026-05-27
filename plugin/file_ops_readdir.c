@@ -628,7 +628,7 @@ repeat:
 		reiser4_tap_relse(&tap);
 
 		if (result >= 0)
-			/* Linux 7.x: f_version removed */
+			(void)inode;
 	} else if (result == -E_NO_NEIGHBOR || result == -ENOENT)
 		result = 0;
 	reiser4_tap_done(&tap);
