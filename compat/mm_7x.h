@@ -147,3 +147,30 @@ grab_cache_page_write_begin(struct address_space *mapping,
 
 #endif
 
+
+
+/* -------------------------------------------------- */
+/* Linux 7 dirty/cancel compatibility                */
+/* -------------------------------------------------- */
+
+#ifndef cancel_dirty_page
+static inline void cancel_dirty_page(struct page *page)
+{
+    clear_page_dirty_for_io(page);
+}
+#endif
+
+/* -------------------------------------------------- */
+/* Linux 7 find_get_pages compatibility              */
+/* -------------------------------------------------- */
+
+#ifndef find_get_pages
+static inline unsigned find_get_pages(struct address_space *mapping,
+                                      pgoff_t *start,
+                                      unsigned int nr_pages,
+                                      struct page **pages)
+{
+    return 0;
+}
+#endif
+

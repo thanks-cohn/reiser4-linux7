@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
    reiser4/README */
 /*
@@ -1607,7 +1608,7 @@ static int update_sd_cryptcompress(struct inode *inode)
 	if (result)
 		return result;
 	if (!IS_NOCMTIME(inode))
-		inode->i_ctime = inode->i_mtime = current_time(inode);
+		inode_set_ctime_current(inode); inode_set_mtime_to_ts(inode, inode_get_ctime(inode));
 
 	result = reiser4_update_sd(inode);
 
@@ -1924,7 +1925,7 @@ static void checkout_page_cluster(struct cluster_handle * clust,
 		int in_page;
 		char * data;
 		assert("edward-1479",
-		       clust->pages[i]->index == clust->pages[0]->index + i);
+		       clust->page_index(pages[i]) == clust->page_index(pages[0]) + i);
 
 		lock_page(clust->pages[i]);
 		if (!PageUptodate(clust->pages[i])) {
@@ -2403,7 +2404,7 @@ static int read_some_cluster_pages(struct inode * inode,
 		    /* the last page is
 		       partially modified,
 		       not uptodate .. */
-		    (size_in_pages(i_size_read(inode)) <= pg->index)) {
+		    (size_in_pages(i_size_read(inode)) <= page_index(pg))) {
 			/* .. and appended,
 			   so set zeroes to the rest */
 			int offset;
@@ -2735,7 +2736,7 @@ int set_cluster_by_page(struct cluster_handle * clust, struct page * page,
 	setting_actor =
 		(clust->pages ? reset_cluster_pgset : alloc_cluster_pgset);
 	result = setting_actor(clust, count);
-	clust->index = pg_to_clust(page->index, page->mapping->host);
+	clust->index = pg_to_clust(page_index(page), page->mapping->host);
 	return result;
 }
 
@@ -3380,10 +3381,10 @@ static int find_anon_page_cluster(struct address_space * mapping,
 
 		/* found */
 		get_page(pages[i]);
-		*index = pages[i]->index + 1;
+		*index = page_index(pages[i]) + 1;
 
 		radix_tree_tag_clear(&mapping->i_pages,
-				     pages[i]->index,
+				     page_index(pages[i]),
 				     PAGECACHE_TAG_REISER4_MOVED);
 		if (last_page_in_cluster(pages[i++]))
 			break;
@@ -3431,7 +3432,7 @@ static int capture_anon_pages(struct address_space * mapping, pgoff_t * index,
 			*index = (pgoff_t) - 1;
 			break;
 		}
-		move_cluster_forward(&clust, inode, pages[0]->index);
+		move_cluster_forward(&clust, inode, page_index(pages[0]));
 		result = capture_page_cluster(&clust, inode);
 
 		put_found_pages(pages, found); /* find_anon_page_cluster */
@@ -3658,7 +3659,7 @@ int setattr_cryptcompress(struct dentry *dentry, struct iattr *attr)
 		} else
 			result = 0;
 	} else
-		result = reiser4_setattr_common(&init_user_ns, dentry, attr);
+		result = reiser4_setattr_common(&nop_mnt_idmap, dentry, attr);
 	return result;
 }
 
