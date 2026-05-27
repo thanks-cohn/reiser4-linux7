@@ -35,7 +35,7 @@ $(MODULE)-objs += \
 			ktxnmgrd.o \
 			blocknrset.o \
 			super.o \
-			super_ops.o \
+			super_ops.o compat/fs_context_stub.o \
 			fsdata.o \
 			export_ops.o \
 			oid.o \

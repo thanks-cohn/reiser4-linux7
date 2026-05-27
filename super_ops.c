@@ -1,3 +1,4 @@
+extern int reiser4_init_fs_context(struct fs_context *fc);
 #include "compat/linux7.h"
 /* Copyright 2005 by Hans Reiser, licensing governed by
  * reiser4/README */
@@ -499,8 +500,6 @@ struct super_operations reiser4_super_operations = {
 	.put_super = reiser4_put_super,
 	.sync_fs = reiser4_sync_fs,
 	.statfs = reiser4_statfs,
-	.remount_fs = reiser4_remount,
-	.writeback_inodes = reiser4_writeback_inodes,
 	.show_options = reiser4_show_options
 };
 
@@ -633,7 +632,7 @@ static struct file_system_type reiser4_fs_type = {
 	.owner = THIS_MODULE,
 	.name = "reiser4",
 	.fs_flags = FS_REQUIRES_DEV,
-	.mount = reiser4_mount,
+	.init_fs_context = reiser4_init_fs_context,
 	.kill_sb = kill_block_super,
 	.next = NULL
 };
