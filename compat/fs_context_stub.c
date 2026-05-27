@@ -23,7 +23,7 @@
 static int reiser4_fill_super_fc(struct super_block *sb,
                                  struct fs_context *fc)
 {
-    return reiser4_fill_super(sb, (void *)fc->source, 0);
+    return reiser4_fill_super(sb, fc->fs_private, 0);
 }
 
 static int reiser4_get_tree_fc(struct fs_context *fc)
