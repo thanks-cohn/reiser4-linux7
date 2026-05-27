@@ -6,39 +6,31 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/compiler-context-analysis.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/compiler_attributes.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/compiler-gcc.h \
- inode.h forward.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/errno.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/errno.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/errno-base.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/int-ll64.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/int-ll64.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/uapi/asm/bitsperlong.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/bitsperlong.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/bitsperlong.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/posix_types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/stddef.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/stddef.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/compiler_types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/posix_types.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/uapi/asm/posix_types_64.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/posix_types.h \
- debug.h reiser4.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/param.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/param.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/param.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/errno.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/errno.h \
+ compat/linux7.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/generated/uapi/linux/version.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/fs.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/fs/super.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/fs/super_types.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/fs_dirent.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/stat.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/uapi/asm/stat.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/posix_types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/uapi/asm/posix_types_64.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/posix_types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/uapi/asm/bitsperlong.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/bitsperlong.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/bitsperlong.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/stat.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/int-ll64.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/int-ll64.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/posix_types.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/stddef.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/stddef.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/compiler_types.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/time.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cache.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/kernel.h \
@@ -71,6 +63,9 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/timex.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/timex.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/param.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/param.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/param.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/param.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/timex.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/processor.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/processor-flags.h \
@@ -124,6 +119,9 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/jump_label.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cleanup.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/err.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/generated/uapi/asm/errno.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/errno.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/asm-generic/errno-base.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/args.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/jump_label.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/nops.h \
@@ -189,6 +187,8 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/bitops/instrumented-lock.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/bitops/le.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/bitops/ext2-atomic-setbit.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/errno.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/errno.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/find.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/string.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/array_size.h \
@@ -492,39 +492,7 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/rw_hint.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/file_ref.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/fs.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/hardirq.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/context_tracking_state.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/ftrace_irq.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vtime.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/hardirq.h \
- key.h dformat.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/unaligned.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/unaligned/packed_struct.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/vdso/unaligned.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/prefetch.h seal.h \
- coord.h plugin/plugin.h plugin/../forward.h plugin/../debug.h \
- plugin/../dformat.h plugin/../key.h plugin/compress/compress.h \
- plugin/crypto/cipher.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/crypto.h \
- plugin/plugin_header.h plugin/item/static_stat.h \
- plugin/item/../../forward.h plugin/item/../../dformat.h \
- plugin/item/internal.h plugin/item/sde.h plugin/item/../../kassign.h \
- plugin/item/../../forward.h plugin/item/../../key.h \
- plugin/item/../../dformat.h plugin/item/../../key.h plugin/item/cde.h \
- plugin/item/item.h plugin/item/../plugin_header.h \
- plugin/item/../../seal.h plugin/item/../../plugin/file/file.h \
- plugin/item/../../plugin/file/../item/extent.h \
- plugin/item/../../plugin/file/../item/../../coord.h \
- plugin/item/../../plugin/file/../item/../../lock.h \
- plugin/item/../../plugin/file/../item/../../forward.h \
- plugin/item/../../plugin/file/../item/../../debug.h \
- plugin/item/../../plugin/file/../item/../../dformat.h \
- plugin/item/../../plugin/file/../item/../../key.h \
- plugin/item/../../plugin/file/../item/../../coord.h \
- plugin/item/../../plugin/file/../item/../../plugin/node/node.h \
- plugin/item/../../plugin/file/../item/../../plugin/node/../../dformat.h \
- plugin/item/../../plugin/file/../item/../../plugin/node/../plugin_header.h \
- plugin/item/../../plugin/file/../item/../../txnmgr.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/pagemap.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/mm.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/pgalloc_tag.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/page_ext.h \
@@ -545,33 +513,21 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/kobject_ns.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vmstat.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vm_event_item.h \
- plugin/item/../../plugin/file/../item/../../readahead.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/pagemap.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/highmem.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cacheflush.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/cacheflush.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/asm-generic/cacheflush.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/kmsan.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/dma-direction.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/hardirq.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/context_tracking_state.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/ftrace_irq.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vtime.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/hardirq.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/highmem-internal.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/hugetlb_inline.h \
- plugin/item/../../plugin/file/../item/../../tap.h \
- plugin/item/../../plugin/file/../item/tail.h \
- plugin/item/../../plugin/file/../item/ctail.h \
- plugin/item/../../plugin/file/../../forward.h \
- plugin/item/../../plugin/file/../../seal.h \
- plugin/item/../../plugin/file/../../lock.h plugin/node/node.h \
- plugin/node/node41.h plugin/node/../../forward.h \
- plugin/node/../../dformat.h plugin/node/node40.h plugin/node/node.h \
- plugin/security/perm.h plugin/security/../../forward.h \
- plugin/security/../plugin_header.h plugin/fibration.h \
- plugin/space/bitmap.h plugin/space/../../dformat.h \
- plugin/space/../../block_alloc.h plugin/space/../../dformat.h \
- plugin/space/../../forward.h plugin/space/space_allocator.h \
- plugin/space/../../forward.h plugin/space/bitmap.h \
- plugin/disk_format/disk_format40.h plugin/disk_format/../../dformat.h \
- plugin/disk_format/disk_format.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/buffer_head.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/bio.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/mempool.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/blk_types.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/bvec.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/device.h \
@@ -642,22 +598,6 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/orc_types.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/device.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/pm_wakeup.h \
- plugin/file/cryptcompress.h plugin/file/../../page_cache.h \
- plugin/file/../../forward.h plugin/file/../../context.h \
- plugin/file/../../debug.h plugin/file/../../dformat.h \
- plugin/file/../../tap.h plugin/file/../../lock.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vmalloc.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/vmalloc.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/pgtable_areas.h \
- plugin/file/../compress/compress.h plugin/file/../crypto/cipher.h \
- plugin/file/file.h plugin/dir/dir.h plugin/plugin_set.h \
- plugin/../type_safe_hash.h plugin/../debug.h plugin/plugin.h \
- plugin/security/perm.h vfs_ops.h super.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/exportfs.h tree.h \
- plugin/node/node.h znode.h jnode.h type_safe_hash.h txnmgr.h \
- page_cache.h context.h lock.h readahead.h tap.h entd.h wander.h fsdata.h \
- kassign.h plugin/object.h plugin/space/space_allocator.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/backing-dev.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/writeback.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/flex_proportions.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/backing-dev-defs.h \
@@ -694,8 +634,72 @@ super_ops.o: super_ops.c \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cgroup_subsys.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cgroup_namespace.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/cgroup_refcnt.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/bio.h \
- /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/mempool.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/blkdev.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/uapi/linux/blkzoned.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/sbitmap.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/file.h inode.h \
+ forward.h debug.h reiser4.h key.h dformat.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/unaligned.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/unaligned/packed_struct.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/vdso/unaligned.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/prefetch.h seal.h \
+ coord.h plugin/plugin.h plugin/../forward.h plugin/../debug.h \
+ plugin/../dformat.h plugin/../key.h plugin/compress/compress.h \
+ plugin/crypto/cipher.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/crypto.h \
+ plugin/plugin_header.h plugin/item/static_stat.h \
+ plugin/item/../../forward.h plugin/item/../../dformat.h \
+ plugin/item/internal.h plugin/item/sde.h plugin/item/../../kassign.h \
+ plugin/item/../../forward.h plugin/item/../../key.h \
+ plugin/item/../../dformat.h plugin/item/../../key.h plugin/item/cde.h \
+ plugin/item/item.h plugin/item/../plugin_header.h \
+ plugin/item/../../seal.h plugin/item/../../plugin/file/file.h \
+ plugin/item/../../plugin/file/../item/extent.h \
+ plugin/item/../../plugin/file/../item/../../coord.h \
+ plugin/item/../../plugin/file/../item/../../lock.h \
+ plugin/item/../../plugin/file/../item/../../forward.h \
+ plugin/item/../../plugin/file/../item/../../debug.h \
+ plugin/item/../../plugin/file/../item/../../dformat.h \
+ plugin/item/../../plugin/file/../item/../../key.h \
+ plugin/item/../../plugin/file/../item/../../coord.h \
+ plugin/item/../../plugin/file/../item/../../plugin/node/node.h \
+ plugin/item/../../plugin/file/../item/../../plugin/node/../../dformat.h \
+ plugin/item/../../plugin/file/../item/../../plugin/node/../plugin_header.h \
+ plugin/item/../../plugin/file/../item/../../txnmgr.h \
+ plugin/item/../../plugin/file/../item/../../readahead.h \
+ plugin/item/../../plugin/file/../item/../../tap.h \
+ plugin/item/../../plugin/file/../item/tail.h \
+ plugin/item/../../plugin/file/../item/ctail.h \
+ plugin/item/../../plugin/file/../../forward.h \
+ plugin/item/../../plugin/file/../../seal.h \
+ plugin/item/../../plugin/file/../../lock.h plugin/node/node.h \
+ plugin/node/node41.h plugin/node/../../forward.h \
+ plugin/node/../../dformat.h plugin/node/node40.h plugin/node/node.h \
+ plugin/security/perm.h plugin/security/../../forward.h \
+ plugin/security/../plugin_header.h plugin/fibration.h \
+ plugin/space/bitmap.h plugin/space/../../dformat.h \
+ plugin/space/../../block_alloc.h plugin/space/../../dformat.h \
+ plugin/space/../../forward.h plugin/space/space_allocator.h \
+ plugin/space/../../forward.h plugin/space/bitmap.h \
+ plugin/disk_format/disk_format40.h plugin/disk_format/../../dformat.h \
+ plugin/disk_format/disk_format.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/buffer_head.h \
+ plugin/file/cryptcompress.h plugin/file/../../page_cache.h \
+ plugin/file/../../forward.h plugin/file/../../context.h \
+ plugin/file/../../debug.h plugin/file/../../dformat.h \
+ plugin/file/../../tap.h plugin/file/../../lock.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/vmalloc.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/vmalloc.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/arch/x86/include/asm/pgtable_areas.h \
+ plugin/file/../compress/compress.h plugin/file/../crypto/cipher.h \
+ plugin/file/file.h plugin/dir/dir.h plugin/plugin_set.h \
+ plugin/../type_safe_hash.h plugin/../debug.h plugin/plugin.h \
+ plugin/security/perm.h vfs_ops.h super.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/exportfs.h tree.h \
+ plugin/node/node.h znode.h jnode.h type_safe_hash.h txnmgr.h \
+ page_cache.h context.h lock.h readahead.h tap.h entd.h wander.h fsdata.h \
+ kassign.h plugin/object.h plugin/space/space_allocator.h \
+ /usr/lib/modules/7.0.3-zen1-2-zen/build/include/linux/backing-dev.h \
  ktxnmgrd.h flush.h plugin/cluster.h plugin/../compat_7x.h \
  plugin/../inode.h safe_link.h checksum.h \
  /usr/lib/modules/7.0.3-zen1-2-zen/build/include/crypto/hash.h \
