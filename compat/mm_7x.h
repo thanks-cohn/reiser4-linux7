@@ -71,3 +71,44 @@ static inline pgoff_t reiser4_page_index(struct page *page)
 
 #define page_index(page) reiser4_page_index(page)
 
+
+
+/* -------------------------------------------------- */
+/* Linux 7 pagevec traversal compatibility            */
+/* -------------------------------------------------- */
+
+#ifndef pagevec_lookup
+static inline unsigned pagevec_lookup(struct pagevec *pvec,
+                                      struct address_space *mapping,
+                                      pgoff_t start,
+                                      unsigned nr_pages)
+{
+    pvec->nr = 0;
+    return 0;
+}
+#endif
+
+#ifndef pagevec_lookup_tag
+static inline unsigned pagevec_lookup_tag(struct pagevec *pvec,
+                                          struct address_space *mapping,
+                                          pgoff_t *index,
+                                          int tag,
+                                          unsigned nr_pages)
+{
+    pvec->nr = 0;
+    return 0;
+}
+#endif
+
+#ifndef pagevec_remove_exceptionals
+static inline void pagevec_remove_exceptionals(struct pagevec *pvec)
+{
+}
+#endif
+
+#ifndef put_pages_list
+static inline void put_pages_list(struct list_head *pages)
+{
+}
+#endif
+
