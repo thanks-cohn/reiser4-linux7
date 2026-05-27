@@ -263,7 +263,7 @@ init_fake_inode(struct super_block *super, struct inode *fake,
 {
 	assert("nikita-2168", fake->i_state & I_NEW);
 	fake->i_mapping->a_ops = &formatted_fake_as_ops;
-	inode_attach_wb(fake, NULL);
+	/* Linux 7.x: inode_attach_wb no longer exported to modules */
 	*pfake = fake;
 	/* NOTE-NIKITA something else? */
 	unlock_new_inode(fake);
