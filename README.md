@@ -1,5 +1,61 @@
 # reiser4-linux7
 
+
+## Recent Changes — Notes From The Frontier
+
+Reiser4 now builds and loads successfully on Linux 7.x kernels again.
+
+This repository has entered a new phase focused on long-term survivability, modern kernel compatibility, and durable filesystem stewardship.
+
+Recent work includes:
+
+- Linux 7.x VFS compatibility restoration
+- Modern MM/pagecache compatibility shims
+- Folio-transition adaptation layers
+- Inode timestamp modernization
+- Removal/replacement of obsolete kernel interfaces
+- Successful `reiser4.ko` module build and load on Linux 7
+- Successful `mkfs.reiser4` filesystem creation on loopback devices
+- Initial compatibility membrane groundwork for future portability efforts
+
+This is not yet production-safe.
+
+Current goals are stability, observability, correctness, recoverability, and reducing dependence on unstable internal kernel interfaces over time.
+
+The old Linux world assumed filesystems and kernels would continue evolving together indefinitely. Time proved otherwise.
+
+Many things changed:
+- VFS internals shifted
+- MM/pagecache evolved
+- writeback semantics hardened
+- folios replaced old assumptions
+- interfaces once considered stable disappeared
+
+Yet the core ideas behind Reiser4 still remain compelling:
+small-file efficiency,
+modularity,
+plugin-oriented architecture,
+and filesystem experimentation unafraid of difficult ideas.
+
+The current direction is intentionally conservative in implementation strategy:
+- compatibility layers over invasive rewrites
+- explicit modernization seams
+- reduction of hidden coupling
+- clearer subsystem boundaries
+- infrastructure that future contributors can actually continue
+
+Boring is good.
+Predictable is good.
+Survivable is good.
+
+This effort exists not merely to preserve an old filesystem,
+but to explore whether durable filesystem architecture can still exist in an era of rapidly shifting internals and increasingly disposable software stacks.
+
+Somewhere between early Linux pragmatism and modern systems reality,
+the work continues.
+
+
+
 ---
 
 ## Current Porting State
