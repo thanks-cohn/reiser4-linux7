@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* COPYRIGHT 2001, 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 
 #include "item.h"
@@ -1119,7 +1120,7 @@ int reiser4_do_readpage_extent(reiser4_extent * ext, reiser4_block_nr pos,
 
 	mapping = page->mapping;
 	oid = get_inode_oid(mapping->host);
-	index = page->index;
+	index = page_index(page);
 
 	switch (state_of_extent(ext)) {
 	case HOLE_EXTENT:
@@ -1256,7 +1257,7 @@ int reiser4_read_extent(flow_t *flow, hint_t *hint,
  *
  * At the beginning: coord->node is read locked, zloaded, page is
  * locked, coord is set to existing unit inside of extent item (it
- * is not necessary that coord matches to page->index)
+ * is not necessary that coord matches to page_index(page))
  */
 int reiser4_readpage_extent(void *vp, struct page *page)
 {
