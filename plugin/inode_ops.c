@@ -27,7 +27,7 @@ static int create_vfs_object(struct inode *parent, struct dentry *dentry,
  * inode_operations.
  * Creates regular file using file plugin from parent directory plugin set.
  */
-int reiser4_create_common(struct user_namespace *mnt_userns,
+int reiser4_create_common(struct mnt_idmap *idmap,
 			  struct inode *parent, struct dentry *dentry,
 			  umode_t mode, bool exclusive)
 {
@@ -334,7 +334,7 @@ int reiser4_unlink_common(struct inode *parent, struct dentry *victim)
  * inode_operations.
  * Creates object using file plugin SYMLINK_FILE_PLUGIN_ID.
  */
-int reiser4_symlink_common(struct user_namespace *mnt_userns,
+int reiser4_symlink_common(struct mnt_idmap *idmap,
 			   struct inode *parent, struct dentry *dentry,
 			   const char *linkname)
 {
@@ -357,7 +357,7 @@ int reiser4_symlink_common(struct user_namespace *mnt_userns,
  * inode_operations.
  * Creates object using file plugin DIRECTORY_FILE_PLUGIN_ID.
  */
-int reiser4_mkdir_common(struct user_namespace *mnt_userns,
+int reiser4_mkdir_common(struct mnt_idmap *idmap,
 			 struct inode *parent, struct dentry *dentry, umode_t mode)
 {
 	reiser4_object_create_data data;
@@ -379,7 +379,7 @@ int reiser4_mkdir_common(struct user_namespace *mnt_userns,
  * inode_operations.
  * Creates object using file plugin SPECIAL_FILE_PLUGIN_ID.
  */
-int reiser4_mknod_common(struct user_namespace *mnt_userns,
+int reiser4_mknod_common(struct mnt_idmap *idmap,
 			 struct inode *parent, struct dentry *dentry,
 			 umode_t mode, dev_t rdev)
 {
@@ -427,7 +427,7 @@ const char *reiser4_get_link_common(struct dentry *dentry,
  *
  * Uses generic function to check for rwx permissions.
  */
-int reiser4_permission_common(struct user_namespace *mnt_userns,
+int reiser4_permission_common(struct mnt_idmap *idmap,
 			      struct inode *inode, int mask)
 {
 	// generic_permission() says that it's rcu-aware...
@@ -435,7 +435,7 @@ int reiser4_permission_common(struct user_namespace *mnt_userns,
 	if (mask & MAY_NOT_BLOCK)
 		return -ECHILD;
 #endif
-	return generic_permission(&init_user_ns, inode, mask);
+	return generic_permission(idmap, inode, mask);
 }
 
 static int setattr_reserve(reiser4_tree *);
@@ -443,7 +443,7 @@ static int setattr_reserve(reiser4_tree *);
 /* this is common implementation of vfs's setattr method of struct
    inode_operations
 */
-int reiser4_setattr_common(struct user_namespace *mnt_userns,
+int reiser4_setattr_common(struct mnt_idmap *idmap,
 			   struct dentry *dentry, struct iattr *attr)
 {
 	reiser4_context *ctx;
@@ -451,7 +451,7 @@ int reiser4_setattr_common(struct user_namespace *mnt_userns,
 	int result;
 
 	inode = dentry->d_inode;
-	result = setattr_prepare(&init_user_ns, dentry, attr);
+	result = setattr_prepare(idmap, dentry, attr);
 	if (result)
 		return result;
 
@@ -468,7 +468,7 @@ int reiser4_setattr_common(struct user_namespace *mnt_userns,
 	 */
 	result = setattr_reserve(reiser4_tree_by_inode(inode));
 	if (!result) {
-		setattr_copy(&init_user_ns, inode, attr);
+		setattr_copy(idmap, inode, attr);
 		mark_inode_dirty(inode);
 		result = reiser4_update_sd(inode);
 	}
@@ -480,7 +480,7 @@ int reiser4_setattr_common(struct user_namespace *mnt_userns,
 /* this is common implementation of vfs's getattr method of struct
    inode_operations
 */
-int reiser4_getattr_common(struct user_namespace *mnt_userns,
+int reiser4_getattr_common(struct mnt_idmap *idmap,
 			   const struct path *path, struct kstat *stat,
 			   u32 request_mask, unsigned int flags)
 {
@@ -500,9 +500,9 @@ int reiser4_getattr_common(struct user_namespace *mnt_userns,
 	stat->uid = obj->i_uid;
 	stat->gid = obj->i_gid;
 	stat->rdev = obj->i_rdev;
-	stat->atime = obj->i_atime;
-	stat->mtime = obj->i_mtime;
-	stat->ctime = obj->i_ctime;
+	stat->atime = inode_get_atime(obj);
+	stat->mtime = inode_get_mtime(obj);
+	stat->ctime = inode_get_ctime(obj);
 	stat->size = obj->i_size;
 	stat->blocks =
 	    (inode_get_bytes(obj) + VFS_BLKSIZE - 1) >> VFS_BLKSIZE_BITS;
@@ -699,7 +699,7 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 			   st_mtime fields of the file and the st_ctime and
 			   st_mtime fields of the parent directory. --SUS
 			 */
-			object->i_ctime = current_time(object);
+			inode_set_ctime_current(object);
 			reiser4_update_dir(parent);
 		}
 		if (result != 0 && obj_dplug && obj_dplug->detach)
@@ -881,7 +881,7 @@ int reiser4_update_dir(struct inode *dir)
 {
 	assert("nikita-2525", dir != NULL);
 
-	dir->i_ctime = dir->i_mtime = current_time(dir);
+	inode_set_ctime_current(dir); inode_set_mtime_to_ts(dir, inode_get_ctime(dir));
 	return reiser4_update_sd(dir);
 }
 
