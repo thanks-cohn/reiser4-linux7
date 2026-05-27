@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* Copyright 2001, 2002, 2003, 2004 by Hans Reiser, licensing governed by
  * reiser4/README */
 
