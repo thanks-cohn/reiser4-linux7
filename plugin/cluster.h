@@ -1,3 +1,13 @@
+#include "../compat_7x.h"
+
+#ifndef page_index
+#define page_index(page) (page_folio(page)->index)
+#endif
+
+#ifndef PageError
+#define PageError(page) (!folio_test_uptodate(page_folio(page)))
+#endif
+
 /* Copyright 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 
 /* This file contains size/offset translators, modulators
@@ -408,3 +418,32 @@ static inline void free_clust_pages(struct cluster_handle *clust)
    scroll-step: 1
    End:
 */
+
+
+#ifndef set_page_dirty_notag
+#define set_page_dirty_notag(page) set_page_dirty(page)
+#endif
+
+
+
+#ifndef bdi_write_congested
+#define bdi_write_congested(bdi) (0)
+#endif
+
+
+
+#ifndef ClearPageError
+#define ClearPageError(page) do { } while (0)
+#endif
+
+#ifndef PageError
+#define PageError(page) (!folio_test_uptodate(page_folio(page)))
+#endif
+
+#ifndef bio_set_op_attrs
+#define bio_set_op_attrs(bio, op, flags) \
+do { \
+    (bio)->bi_opf = (op) | (flags); \
+} while (0)
+#endif
+

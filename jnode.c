@@ -1,3 +1,4 @@
+#include "compat_7x.h"
 /* Copyright 2001, 2002, 2003, 2004 by Hans Reiser, licensing governed by
  * reiser4/README */
 /* Jnode manipulation functions. */
@@ -599,7 +600,7 @@ static jnode *do_jget(reiser4_tree * tree, struct page *pg)
 	tree = reiser4_tree_by_page(pg);
 
 	/* check hash-table first */
-	result = jfind(pg->mapping, pg->index);
+	result = jfind(pg->mapping, page_folio(pg)->index);
 	if (unlikely(result != NULL)) {
 		spin_lock_jnode(result);
 		jnode_attach_page(result, pg);
@@ -610,7 +611,7 @@ static jnode *do_jget(reiser4_tree * tree, struct page *pg)
 
 	/* since page is locked, jnode should be allocated with GFP_NOFS flag */
 	reiser4_ctx_gfp_mask_force(GFP_NOFS);
-	result = find_get_jnode(tree, pg->mapping, oid, pg->index);
+	result = find_get_jnode(tree, pg->mapping, oid, page_folio(pg)->index);
 	if (unlikely(IS_ERR(result)))
 		return result;
 	/* attach jnode to page */
@@ -636,7 +637,7 @@ jnode *jnode_of_page(struct page *pg)
 		assert("nikita-2046", jnode_page(jprivate(pg)) == pg);
 		if (jnode_is_unformatted(jprivate(pg))) {
 			assert("nikita-2364",
-			       jprivate(pg)->key.j.index == pg->index);
+			       jprivate(pg)->key.j.index == page_folio(pg)->index);
 			assert("nikita-2367",
 			       jprivate(pg)->key.j.mapping == pg->mapping);
 			assert("nikita-2365",
@@ -744,7 +745,7 @@ static struct page *jnode_lock_page(jnode * node)
 		/* Page is locked by someone else. */
 		get_page(page);
 		spin_unlock_jnode(node);
-		wait_on_page_locked(page);
+		folio_wait_locked(page_folio(page));
 		/* it is possible that page was detached from jnode and
 		   returned to the free pool, or re-assigned while we were
 		   waiting on locked bit. This will be rechecked on the next
@@ -890,7 +891,7 @@ int jload_gfp(jnode * node /* node to load */ ,
 		if (unlikely(result != 0))
 			goto failed;
 
-		wait_on_page_locked(page);
+		folio_wait_locked(page_folio(page));
 		if (unlikely(!PageUptodate(page))) {
 			result = RETERR(-EIO);
 			goto failed;
@@ -1080,12 +1081,12 @@ int jwait_io(jnode * node, int rw)
 
 	result = 0;
 	if (rw == READ) {
-		wait_on_page_locked(page);
+		folio_wait_locked(page_folio(page));
 	} else {
 		assert("nikita-2227", rw == WRITE);
 		wait_on_page_writeback(page);
 	}
-	if (PageError(page))
+	if (folio_test_uptodate(page_folio(page)) == 0)
 		result = RETERR(-EIO);
 
 	return result;

@@ -1,3 +1,4 @@
+#include "compat_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
    reiser4/README */
 

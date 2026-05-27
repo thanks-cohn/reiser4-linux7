@@ -1,5 +1,24 @@
+#include "compat_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
  * reiser4/README */
+
+
+#ifndef ClearPageError
+#define ClearPageError(page) do { } while (0)
+#endif
+
+#ifndef PageError
+#define PageError(page) (!folio_test_uptodate(page_folio(page)))
+#endif
+
+#ifndef bio_set_op_attrs
+#define bio_set_op_attrs(bio, op, flags) \
+do { \
+    (bio)->bi_opf = (op) | (flags); \
+} while (0)
+#endif
+
+
 
 /* Reiser4 Wandering Log */
 
@@ -725,7 +744,7 @@ static int write_jnodes_to_disk_extent(
 		int i;
 		int nr_used;
 
-		bio = bio_alloc(GFP_NOIO, nr_blocks);
+		bio = bio_alloc(NULL, nr_blocks, REQ_OP_WRITE, GFP_NOIO);
 		if (!bio)
 			return RETERR(-ENOMEM);
 

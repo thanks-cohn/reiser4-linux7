@@ -1,3 +1,4 @@
+#include "compat_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
  * reiser4/README */
 
@@ -206,7 +207,49 @@
 
 static struct bio *page_bio(struct page *, jnode * , int rw, gfp_t gfp);
 
-static struct address_space_operations formatted_fake_as_ops;
+static int formatted_readpage(struct file *f, struct page *page);
+static int formatted_set_page_dirty(struct page *page);
+
+/* ---------- Linux 6.x / 7.x folio wrappers ---------- */
+
+static int reiser4_read_folio(struct file *file, struct folio *folio)
+{
+    return formatted_readpage(file, &folio->page);
+}
+
+static bool reiser4_dirty_folio(struct address_space *mapping,
+                                struct folio *folio)
+{
+    formatted_set_page_dirty(&folio->page);
+    return true;
+}
+
+static void reiser4_invalidate_folio(struct folio *folio,
+                                     size_t offset,
+                                     size_t length)
+{
+    reiser4_invalidatepage(&folio->page, offset, length);
+}
+
+static bool reiser4_release_folio(struct folio *folio,
+                                  gfp_t gfp)
+{
+    return reiser4_releasepage(&folio->page, gfp);
+}
+
+static int reiser4_migrate_folio(struct address_space *mapping,
+                                 struct folio *dst,
+                                 struct folio *src,
+                                 enum migrate_mode mode)
+{
+    return reiser4_migratepage(mapping,
+                               &dst->page,
+                               &src->page,
+                               mode);
+}
+
+
+struct address_space_operations formatted_fake_as_ops;
 
 static const oid_t fake_ino = 0x1;
 static const oid_t bitmap_ino = 0x2;
@@ -419,7 +462,7 @@ static struct bio *page_bio(struct page *page, jnode * node, int rw, gfp_t gfp)
 	   anyway, so lets use all the bells-and-whistles of bio code.
 	 */
 
-	bio = bio_alloc(gfp, 1);
+	bio = bio_alloc(NULL, 1, rw, gfp);
 	if (bio != NULL) {
 		int blksz;
 		struct super_block *super;
@@ -500,7 +543,7 @@ static int formatted_set_page_dirty(struct page *page)
 {
 	assert("nikita-2173", page != NULL);
 	BUG();
-	return __set_page_dirty_nobuffers(page);
+	return filemap_dirty_folio(page->mapping, page_folio(page));
 }
 
 /* writepages method of address space operations in reiser4 is used to involve
@@ -515,12 +558,12 @@ writepages_fake(struct address_space *mapping, struct writeback_control *wbc)
 }
 
 /* address space operations for the fake inode */
-static struct address_space_operations formatted_fake_as_ops = {
+struct address_space_operations formatted_fake_as_ops = {
 	/* Perform a writeback of a single page as a memory-freeing
 	 * operation. */
-	.writepage = reiser4_writepage,
+	/* .writepage removed in folio-era kernels */
 	/* this is called to read formatted node */
-	.readpage = formatted_readpage,
+	.read_folio = reiser4_read_folio,
 	/* ->sync_page() method of fake inode address space operations. Called
 	   from wait_on_page() and lock_page().
 
@@ -533,24 +576,24 @@ static struct address_space_operations formatted_fake_as_ops = {
 	   called during sync (pdflush) */
 	.writepages = writepages_fake,
 	/* Set a page dirty */
-	.set_page_dirty = formatted_set_page_dirty,
+	.dirty_folio = reiser4_dirty_folio,
 	/* used for read-ahead. Not applicable */
-	.readpages = NULL,
+	
 	.write_begin = NULL,
 	.write_end = NULL,
 	.bmap = NULL,
 	/* called just before page is being detached from inode mapping and
 	   removed from memory. Called on truncate, cut/squeeze, and
 	   umount. */
-	.invalidatepage = reiser4_invalidatepage,
+	.invalidate_folio = reiser4_invalidate_folio,
 	/* this is called by shrink_cache() so that file system can try to
 	   release objects (jnodes, buffers, journal heads) attached to page
 	   and, may be made page itself free-able.
 	 */
-	.releasepage = reiser4_releasepage,
+	.release_folio = reiser4_release_folio,
 	.direct_IO = NULL,
-	.migratepage = reiser4_migratepage,
-	.batch_lock_tabu = 1
+	.migrate_folio = reiser4_migrate_folio,
+	/* .batch_lock_tabu removed */
 };
 
 /* called just before page is released (no longer used by reiser4). Callers:
