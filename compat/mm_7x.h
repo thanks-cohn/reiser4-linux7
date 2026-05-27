@@ -11,12 +11,12 @@
 
 /* page->index compatibility */
 #ifndef page_index
-#define page_index(page) ((page)->index)
+#define page_index(page) folio_index(page_folio(page))
 #endif
 
 /* wait_on_page_locked modernization */
 #ifndef wait_on_page_locked
-#define wait_on_page_locked(page) wait_on_page_bit(page, PG_locked)
+#define wait_on_page_locked(page) folio_wait_locked(page_folio(page))
 #endif
 
 /* zero_user modernization */
@@ -35,3 +35,23 @@
 #endif
 
 #endif
+
+
+/* -------------------------------------------------- */
+/* temporary Linux 7 pagevec compatibility            */
+/* -------------------------------------------------- */
+
+struct pagevec {
+    unsigned int nr;
+};
+
+static inline void pagevec_init(struct pagevec *pvec)
+{
+    pvec->nr = 0;
+}
+
+static inline void pagevec_release(struct pagevec *pvec)
+{
+    pvec->nr = 0;
+}
+

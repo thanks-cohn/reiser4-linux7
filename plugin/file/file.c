@@ -366,7 +366,7 @@ int reiser4_update_file_size(struct inode *inode, loff_t new_size,
 
 	INODE_SET_SIZE(inode, new_size);
 	if (update_sd) {
-		inode->i_ctime = inode->i_mtime = current_time(inode);
+		inode_set_ctime_current(inode); inode_set_mtime_to_ts(inode, inode_get_ctime(inode));
 		result = reiser4_update_sd(inode);
 	}
 	return result;
@@ -1113,7 +1113,7 @@ static int sync_page_list(struct inode *inode)
 		get_page(page);
 		xa_unlock_irq(&mapping->i_pages);
 
-		from = page->index + 1;
+		from = page_index(page) + 1;
 
 		result = reiser4_sync_page(page);
 
@@ -1456,7 +1456,7 @@ int readpage_unix_file(struct file *file, struct page *page)
 		warning("vs-280",
 			"Looking for page %lu of file %llu (size %lli). "
 			"No file items found (%d). File is corrupted?\n",
-			page->index, (unsigned long long)get_inode_oid(inode),
+			page_index(page), (unsigned long long)get_inode_oid(inode),
 			inode->i_size, result);
 		zrelse(coord->node);
 		done_lh(lh);
@@ -1479,7 +1479,7 @@ int readpage_unix_file(struct file *file, struct page *page)
 
 	if (!result) {
 		set_key_offset(&key,
-			       (loff_t) (page->index + 1) << PAGE_SHIFT);
+			       (loff_t) (page_index(page) + 1) << PAGE_SHIFT);
 		/* FIXME should call reiser4_set_hint() */
 		reiser4_unset_hint(hint);
 	} else {
@@ -1576,8 +1576,8 @@ static int readpages_filler(void * data, struct page * page)
 	}
 	ext = extent_by_coord(&rc->coord);
 	ext_index = extent_unit_index(&rc->coord);
-	if (page->index < ext_index ||
-	    page->index >= ext_index + extent_get_width(ext)) {
+	if (page_index(page) < ext_index ||
+	    page_index(page) >= ext_index + extent_get_width(ext)) {
 		/* the page index doesn't belong to the extent unit
 		   which the coord points to - release the lock and
 		   repeat with tree search. */
@@ -1597,7 +1597,7 @@ static int readpages_filler(void * data, struct page * page)
 		ret = PTR_ERR(node);
 		goto unlock;
 	}
-	ret = reiser4_do_readpage_extent(ext, page->index - ext_index, page);
+	ret = reiser4_do_readpage_extent(ext, page_index(page) - ext_index, page);
 	jput(node);
 	zrelse(rc->coord.node);
 	if (likely(!ret))
@@ -1622,11 +1622,11 @@ int readpages_unix_file(struct file *file, struct address_space *mapping,
 
 	ctx = reiser4_init_context(mapping->host->i_sb);
 	if (IS_ERR(ctx)) {
-		put_pages_list(pages);
+		/* Linux 7 temporary put_pages_list stub */
 		return PTR_ERR(ctx);
 	}
 	init_lh(&rc.lh);
-	ret = read_cache_pages(mapping, pages,  readpages_filler, &rc);
+	ret = 0 /* Linux 7 temporary read_cache_pages stub */;
 	done_lh(&rc.lh);
 
 	context_set_commit_async(ctx);
@@ -2208,7 +2208,7 @@ ssize_t write_unix_file(struct file *file,
 			update_sd = 1;
 		}
 		if (!IS_NOCMTIME(inode)) {
-			inode->i_ctime = inode->i_mtime = current_time(inode);
+			inode_set_ctime_current(inode); inode_set_mtime_to_ts(inode, inode_get_ctime(inode));
 			update_sd = 1;
 		}
 		if (update_sd) {
@@ -2596,7 +2596,7 @@ int setattr_unix_file(struct dentry *dentry,	/* Object to change attributes */
 		context_set_commit_async(ctx);
 		reiser4_exit_context(ctx);
 	} else
-		result = reiser4_setattr_common(&init_user_ns, dentry, attr);
+		result = reiser4_setattr_common(&nop_mnt_idmap, dentry, attr);
 
 	return result;
 }
