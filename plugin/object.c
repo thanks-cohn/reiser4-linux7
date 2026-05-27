@@ -1,3 +1,4 @@
+#include "../compat/folio_bridge.c"
 #include "../compat/vfs_7x.h"
 #include "../compat/folio_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
