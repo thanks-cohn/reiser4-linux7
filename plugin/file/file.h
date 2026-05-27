@@ -27,7 +27,7 @@ struct dispatch_context {
  */
 
 /* inode operations */
-int reiser4_setattr_dispatch(struct user_namespace *mnt_userns,
+int reiser4_setattr_dispatch(struct mnt_idmap *idmap,
 			     struct dentry *, struct iattr *);
 
 /* file operations */
