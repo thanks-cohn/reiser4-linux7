@@ -46,3 +46,40 @@
 #define bdi_write_congested(bdi) 0
 #endif
 
+
+
+/* ------------------------------------------------ */
+/* Shrinker compatibility                           */
+/* ------------------------------------------------ */
+
+#include <linux/shrinker.h>
+
+#ifndef register_shrinker
+#define register_shrinker(shrinker) \
+        shrinker_register(shrinker)
+
+#define unregister_shrinker(shrinker) \
+        shrinker_free(shrinker)
+#endif
+
+
+
+/* ------------------------------------------------ */
+/* inode state compatibility                        */
+/* ------------------------------------------------ */
+
+#ifndef inode_state
+#define inode_state(inode, flag) (inode_state_read(inode) & (flag))
+#endif
+
+
+
+/* ------------------------------------------------ */
+/* Dirty page compatibility                         */
+/* ------------------------------------------------ */
+
+#ifndef __set_page_dirty_nobuffers
+#define __set_page_dirty_nobuffers(page) \
+        filemap_dirty_folio((page)->mapping, page_folio(page))
+#endif
+

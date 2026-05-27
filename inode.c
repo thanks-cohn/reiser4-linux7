@@ -1,3 +1,5 @@
+#include "compat/linux7.h"
+#include <linux/fs.h>
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
    reiser4/README */
 
@@ -441,7 +443,7 @@ struct inode *reiser4_iget(struct super_block *super, const reiser4_key *key,
 			loading_end(info);
 	}
 
-	if (inode->i_state & I_NEW)
+	if (inode_state(inode, I_NEW))
 		unlock_new_inode(inode);
 
 	if (is_bad_inode(inode)) {

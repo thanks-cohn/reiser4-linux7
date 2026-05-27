@@ -1,3 +1,4 @@
+#include "compat/bio_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
  * reiser4/README */
 
@@ -43,7 +44,7 @@ int reiser4_status_init(reiser4_block_nr block)
 	if (!page)
 		return -ENOMEM;
 
-	bio = bio_alloc(reiser4_ctx_gfp_mask_get(), 1);
+	bio = reiser4_bio_alloc(reiser4_ctx_gfp_mask_get(), 1);
 	if (bio != NULL) {
 		bio->bi_iter.bi_sector = block * (sb->s_blocksize >> 9);
 		bio_set_dev(bio, sb->s_bdev);
@@ -145,7 +146,7 @@ int reiser4_status_write(__u64 status, __u64 extended_status, char *message)
 	strncpy(statuspage->texterror, message, REISER4_TEXTERROR_LEN);
 
 	kunmap_atomic((char *)statuspage);
-	bio_reset(bio);
+	reiser4_bio_reset(bio);
 	bio_set_dev(bio, sb->s_bdev);
 	bio->bi_io_vec[0].bv_page = get_super_private(sb)->status_page;
 	bio->bi_io_vec[0].bv_len = sb->s_blocksize;

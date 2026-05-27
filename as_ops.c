@@ -1,3 +1,4 @@
+#include "compat/linux7.h"
 /* Copyright 2003 by Hans Reiser, licensing governed by reiser4/README */
 
 /* Interface to VFS. Reiser4 address_space_operations are defined here. */

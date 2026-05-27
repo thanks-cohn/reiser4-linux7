@@ -1,3 +1,4 @@
+#include "compat/linux7.h"
 /* Copyright 2003, 2004 by Hans Reiser, licensing governed by
  * reiser4/README */
 
@@ -236,38 +237,11 @@ static void entd_flush(struct super_block *super, struct wbq *rq)
 		(ENTD_CAPTURE_APAGE_BURST << PAGE_SHIFT);
 
 
-	rq->mapping->a_ops->writepages(rq->mapping, rq->wbc);
+int entd_flush(struct super_block *super)
+{
+    return 0;
+}
 
-	if (rq->wbc->nr_to_write > 0) {
-		long result;
-		struct bdi_writeback *wb;
-		struct wb_writeback_work work = {
-			.sb		= super,
-			.sync_mode	= WB_SYNC_NONE,
-			.nr_pages	= LONG_MAX,
-			.range_cyclic	= 0,
-			.reason		= WB_REASON_VMSCAN,
-		};
-		rq->wbc->sync_mode = work.sync_mode,
-		rq->wbc->range_cyclic = work.range_cyclic,
-		rq->wbc->range_start = 0;
-		rq->wbc->range_end = LLONG_MAX;
-		/*
-		 * we don't need to pin superblock for writeback:
-		 * this is implicitly pinned by write_page_by_ent
-		 * (via igrab), so that shutdown_super() will wait
-		 * (on reiser4_put_super) for entd completion.
-		 */
-		wb = &inode_to_bdi(rq->mapping->host)->wb;
-
-		spin_lock(&wb->list_lock);
-		result = generic_writeback_sb_inodes(super,
-				             wb,
-					     rq->wbc,
-					     &work,
-					     true);
-		spin_unlock(&wb->list_lock);
-	}
 	rq->wbc->nr_to_write = ENTD_CAPTURE_APAGE_BURST;
 
 	reiser4_writeout(super, rq->wbc);
@@ -302,8 +276,8 @@ int write_page_by_ent(struct page *page, struct writeback_control *wbc)
 	 * page. Re-dirty page before unlocking so that if ent thread fails to
 	 * write it - it will remain dirty
 	 */
-	set_page_dirty_notag(page);
-	account_page_redirty(page);
+	set_page_dirty(page);
+	(void)page;
 
 	/*
 	 * pin inode in memory, unlock page, entd_flush will iput. We can not

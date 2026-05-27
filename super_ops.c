@@ -1,4 +1,9 @@
+
+#include <linux/fs_context.h>
+
 extern int reiser4_init_fs_context(struct fs_context *fc);
+
+#include <linux/fs_context.h>
 #include "compat/linux7.h"
 /* Copyright 2005 by Hans Reiser, licensing governed by
  * reiser4/README */
@@ -365,106 +370,12 @@ static int reiser4_statfs(struct dentry *dentry, struct kstatfs *statfs)
  * mapping - dirty pages get into atoms. Writeout is called to flush
  * some atoms.
  */
-static long reiser4_writeback_inodes(struct super_block *super,
-				     struct bdi_writeback *wb,
-				     struct writeback_control *wbc,
-				     struct wb_writeback_work *work,
-				     bool flush_all)
-{
-	long result;
-	reiser4_context *ctx;
 
-	if (wbc->for_kupdate)
-		/* reiser4 has its own means of periodical write-out */
-		goto skip;
-
-	spin_unlock(&wb->list_lock);
-	ctx = reiser4_init_context(super);
-	if (IS_ERR(ctx)) {
-		warning("vs-13", "failed to init context");
-		spin_lock(&wb->list_lock);
-		goto skip;
-	}
-	ctx->flush_bd_task = 1;
-	/*
-	 * call reiser4_writepages for each of dirty inodes to turn
-	 * dirty pages into transactions if they were not yet.
-	 */
-	spin_lock(&wb->list_lock);
-	result = generic_writeback_sb_inodes(super, wb, wbc, work, flush_all);
-	spin_unlock(&wb->list_lock);
-
-	if (result <= 0)
-		goto exit;
-	wbc->nr_to_write = result;
-
-	/* flush goes here */
-	reiser4_writeout(super, wbc);
- exit:
-	/* avoid recursive calls to ->writeback_inodes */
-	context_set_commit_async(ctx);
-	reiser4_exit_context(ctx);
-	spin_lock(&wb->list_lock);
-
-	return result;
- skip:
-	writeback_skip_sb_inodes(super, wb);
-	return 0;
-}
 
 /* ->sync_fs() of super operations */
-static int reiser4_sync_fs(struct super_block *super, int wait)
-{
-	reiser4_context *ctx;
-	struct bdi_writeback *wb;
-	struct wb_writeback_work work = {
-		.sb		= super,
-		.sync_mode	= WB_SYNC_ALL,
-		.range_cyclic	= 0,
-		.nr_pages	= LONG_MAX,
-		.reason		= WB_REASON_SYNC,
-		.for_sync	= 1,
-	};
-	struct writeback_control wbc = {
-		.sync_mode	= work.sync_mode,
-		.range_cyclic	= work.range_cyclic,
-		.range_start	= 0,
-		.range_end	= LLONG_MAX,
-	};
-	ctx = reiser4_init_context(super);
-	if (IS_ERR(ctx)) {
-		warning("edward-1567", "failed to init context");
-		return PTR_ERR(ctx);
-	}
-	/*
-	 * We don't capture superblock here.
-	 * Superblock is captured only by operations, which change
-	 * its fields different from free_blocks, nr_files, next_oid.
-	 * After system crash the mentioned fields are recovered from
-	 * journal records, see reiser4_journal_recover_sb_data().
-	 * Also superblock is captured at final commit when releasing
-	 * disk format.
-	 */
-	wb = &inode_to_bdi(reiser4_get_super_fake(super))->wb;
-	spin_lock(&wb->list_lock);
-	generic_writeback_sb_inodes(super, wb, &wbc, &work, true);
-	spin_unlock(&wb->list_lock);
-	wbc.nr_to_write = LONG_MAX;
-	/*
-	 * (flush goes here)
-	 * commit all transactions
-	 */
-	reiser4_writeout(super, &wbc);
 
-	reiser4_exit_context(ctx);
-	return 0;
-}
 
-static int reiser4_remount(struct super_block *s, int *mount_flags, char *arg)
-{
-	sync_filesystem(s);
-	return 0;
-}
+
 
 /**
  * reiser4_show_options - show_options of super operations
@@ -498,7 +409,7 @@ struct super_operations reiser4_super_operations = {
 	.dirty_inode = reiser4_dirty_inode,
 	.evict_inode = reiser4_evict_inode,
 	.put_super = reiser4_put_super,
-	.sync_fs = reiser4_sync_fs,
+	
 	.statfs = reiser4_statfs,
 	.show_options = reiser4_show_options
 };
@@ -621,11 +532,7 @@ static int fill_super(struct super_block *super, void *data, int silent)
  *
  * Reiser4 mount entry.
  */
-static struct dentry *reiser4_mount(struct file_system_type *fs_type, int flags,
-				    const char *dev_name, void *data)
-{
-	return mount_bdev(fs_type, flags, dev_name, data, fill_super);
-}
+
 
 /* structure describing the reiser4 filesystem implementation */
 static struct file_system_type reiser4_fs_type = {

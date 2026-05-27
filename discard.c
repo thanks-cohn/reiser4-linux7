@@ -85,8 +85,7 @@ static int __discard_extent(struct block_device *bdev, sector_t start,
 {
 	assert("intelfx-21", bdev != NULL);
 
-	return blkdev_issue_discard(bdev, start, len, reiser4_ctx_gfp_mask_get(),
-	                            0);
+	return blkdev_issue_discard(bdev, start, len, reiser4_ctx_gfp_mask_get());
 }
 
 static int discard_extent(txn_atom *atom UNUSED_ARG,
