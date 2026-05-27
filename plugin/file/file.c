@@ -977,13 +977,13 @@ capture_anonymous_pages(struct address_space *mapping, pgoff_t *index,
 	/* clear MOVED tag for all found pages */
 	for (i = 0; i < pagevec_count(&pvec); i++) {
 		get_page(pvec.pages[i]);
-		radix_tree_tag_clear(&mapping->i_pages, page_index(pvec.pages[i]),
+		radix_tree_tag_clear(&mapping->i_pages, reiser4_page_index(pvec.pages[i]),
 				     PAGECACHE_TAG_REISER4_MOVED);
 	}
 	xa_unlock_irq(&mapping->i_pages);
 
 
-	*index = pvec.pages[i - 1]->index + 1;
+	*index = reiser4_page_index(pvec.pages[i - 1]) + 1;
 
 	for (i = 0; i < pagevec_count(&pvec); i++) {
 		result = capture_anonymous_page(pvec.pages[i]);
@@ -1003,7 +1003,7 @@ capture_anonymous_pages(struct address_space *mapping, pgoff_t *index,
 				xa_lock_irq(&mapping->i_pages);
 				for (; i < pagevec_count(&pvec); i ++) {
 					radix_tree_tag_set(&mapping->i_pages,
-							   page_index(pvec.pages[i]),
+							   reiser4_page_index(pvec.pages[i]),
 							   PAGECACHE_TAG_REISER4_MOVED);
 				}
 				xa_unlock_irq(&mapping->i_pages);
@@ -1018,13 +1018,13 @@ capture_anonymous_pages(struct address_space *mapping, pgoff_t *index,
 				 */
 				xa_lock_irq(&mapping->i_pages);
 				radix_tree_tag_set(&mapping->i_pages,
-						   page_index(pvec.pages[i]),
+						   reiser4_page_index(pvec.pages[i]),
 						   PAGECACHE_TAG_REISER4_MOVED);
 				xa_unlock_irq(&mapping->i_pages);
 				if (i == 0)
-					*index = pvec.pages[0]->index;
+					*index = reiser4_page_index(pvec.pages[0]);
 				else
-					*index = pvec.pages[i - 1]->index + 1;
+					*index = reiser4_page_index(pvec.pages[i - 1]) + 1;
 			}
 		}
 	}

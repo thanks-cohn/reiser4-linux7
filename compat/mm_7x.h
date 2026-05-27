@@ -11,7 +11,7 @@
 
 /* page->index compatibility */
 #ifndef page_index
-#define page_index(page) ((page)->index)
+
 #endif
 
 /* wait_on_page_locked modernization */
@@ -57,4 +57,17 @@ static inline void pagevec_release(struct pagevec *pvec)
     pvec->nr = 0;
 }
 
+
+
+
+/* -------------------------------------------------- */
+/* durable page index abstraction                     */
+/* -------------------------------------------------- */
+
+static inline pgoff_t reiser4_page_index(struct page *page)
+{
+    return page_folio(page)->index;
+}
+
+#define page_index(page) reiser4_page_index(page)
 
