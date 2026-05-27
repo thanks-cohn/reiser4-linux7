@@ -329,9 +329,9 @@ static int present_unix_sd(struct inode *inode /* object being processed */ ,
 
 		i_uid_write(inode, le32_to_cpu(get_unaligned(&sd->uid)));
 		i_gid_write(inode, le32_to_cpu(get_unaligned(&sd->gid)));
-		inode->i_atime.tv_sec = le32_to_cpu(get_unaligned(&sd->atime));
-		inode->i_mtime.tv_sec = le32_to_cpu(get_unaligned(&sd->mtime));
-		inode->i_ctime.tv_sec = le32_to_cpu(get_unaligned(&sd->ctime));
+		inode_set_atime_to_ts(inode, (struct timespec64){ .tv_sec = le32_to_cpu(get_unaligned(&sd->atime)), .tv_nsec = 0 });
+		inode_set_mtime_to_ts(inode, (struct timespec64){ .tv_sec = le32_to_cpu(get_unaligned(&sd->mtime)), .tv_nsec = 0 });
+		inode_set_ctime_to_ts(inode, (struct timespec64){ .tv_sec = le32_to_cpu(get_unaligned(&sd->ctime)), .tv_nsec = 0 });
 		if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode))
 			inode->i_rdev = le64_to_cpu(get_unaligned(&sd->u.rdev));
 		else
@@ -346,7 +346,7 @@ static int absent_unix_sd(struct inode *inode /* object being processed */ )
 {
 	i_uid_write(inode, get_super_private(inode->i_sb)->default_uid);
 	i_gid_write(inode, get_super_private(inode->i_sb)->default_gid);
-	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	inode_set_atime_to_ts(inode, current_time(inode)); inode_set_mtime_to_ts(inode, current_time(inode)); inode_set_ctime_current(inode);
 	inode_set_bytes(inode, inode->i_size);
 	/* mark inode as lightweight, so that caller (lookup_common) will
 	   complete initialisation by copying [ug]id from a parent. */
@@ -373,9 +373,9 @@ static int save_unix_sd(struct inode *inode /* object being processed */ ,
 	sd = (reiser4_unix_stat *) * area;
 	put_unaligned(cpu_to_le32(i_uid_read(inode)), &sd->uid);
 	put_unaligned(cpu_to_le32(i_gid_read(inode)), &sd->gid);
-	put_unaligned(cpu_to_le32((__u32) inode->i_atime.tv_sec), &sd->atime);
-	put_unaligned(cpu_to_le32((__u32) inode->i_ctime.tv_sec), &sd->ctime);
-	put_unaligned(cpu_to_le32((__u32) inode->i_mtime.tv_sec), &sd->mtime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_atime(inode).tv_sec), &sd->atime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_ctime(inode).tv_sec), &sd->ctime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_mtime(inode).tv_sec), &sd->mtime);
 	if (S_ISBLK(inode->i_mode) || S_ISCHR(inode->i_mode))
 		put_unaligned(cpu_to_le64(inode->i_rdev), &sd->u.rdev);
 	else
@@ -394,9 +394,9 @@ present_large_times_sd(struct inode *inode /* object being processed */ ,
 
 		sd_lt = (reiser4_large_times_stat *) * area;
 
-		inode->i_atime.tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->atime));
-		inode->i_mtime.tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->mtime));
-		inode->i_ctime.tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->ctime));
+		inode_set_atime_to_ts(inode, (struct timespec64){ .tv_sec = inode_get_atime(inode).tv_sec, .tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->atime)) });
+		inode_set_mtime_to_ts(inode, (struct timespec64){ .tv_sec = inode_get_mtime(inode).tv_sec, .tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->mtime)) });
+		inode_set_ctime_to_ts(inode, (struct timespec64){ .tv_sec = inode_get_ctime(inode).tv_sec, .tv_nsec = le32_to_cpu(get_unaligned(&sd_lt->ctime)) });
 
 		move_on(len, area, sizeof *sd_lt);
 		return 0;
@@ -423,9 +423,9 @@ save_large_times_sd(struct inode *inode /* object being processed */ ,
 
 	sd = (reiser4_large_times_stat *) * area;
 
-	put_unaligned(cpu_to_le32((__u32) inode->i_atime.tv_nsec), &sd->atime);
-	put_unaligned(cpu_to_le32((__u32) inode->i_ctime.tv_nsec), &sd->ctime);
-	put_unaligned(cpu_to_le32((__u32) inode->i_mtime.tv_nsec), &sd->mtime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_atime(inode).tv_nsec), &sd->atime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_ctime(inode).tv_nsec), &sd->ctime);
+	put_unaligned(cpu_to_le32((__u32) inode_get_mtime(inode).tv_nsec), &sd->mtime);
 
 	*area += sizeof *sd;
 	return 0;

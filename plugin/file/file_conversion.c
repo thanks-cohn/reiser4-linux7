@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser,
    licensing governed by reiser4/README */
 
@@ -548,7 +549,7 @@ ssize_t reiser4_write_dispatch(struct file *file, const char __user *buf,
 	ctx = reiser4_init_context(inode->i_sb);
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
-	current->backing_dev_info = inode_to_bdi(inode);
+	/* Linux 7.x: current->backing_dev_info removed */
 	init_dispatch_context(&cont);
 	inode_lock(inode);
 
@@ -606,7 +607,7 @@ ssize_t reiser4_write_dispatch(struct file *file, const char __user *buf,
  exit:
 	inode_unlock(inode);
 	done_dispatch_context(&cont, inode);
-	current->backing_dev_info = NULL;
+	/* Linux 7.x: current->backing_dev_info removed */
 	context_set_commit_async(ctx);
 	reiser4_exit_context(ctx);
 
@@ -681,7 +682,7 @@ int reiser4_write_begin_dispatch(struct file *file,
 
 	index = pos >> PAGE_SHIFT;
 	page = grab_cache_page_write_begin(mapping, index,
-					   flags & AOP_FLAG_NOFS);
+					   0);
 	*pagep = page;
 	if (!page)
 		return -ENOMEM;
@@ -744,7 +745,7 @@ int reiser4_write_end_dispatch(struct file *file,
 /*
  * Dispatchers without protection
  */
-int reiser4_setattr_dispatch(struct user_namespace *mnt_userns,
+int reiser4_setattr_dispatch(struct mnt_idmap *idmap,
 			     struct dentry *dentry, struct iattr *attr)
 {
 	return inode_file_plugin(dentry->d_inode)->setattr(dentry, attr);

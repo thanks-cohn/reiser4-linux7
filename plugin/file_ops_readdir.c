@@ -491,7 +491,7 @@ loff_t reiser4_llseek_dir_common(struct file *file, loff_t off, int origin)
 	inode_lock(inode);
 
 	/* update ->f_pos */
-	result = default_llseek_unlocked(file, off, origin);
+	result = generic_file_llseek(file, off, origin);
 	if (result >= 0) {
 		int ff;
 		coord_t coord;
@@ -628,7 +628,7 @@ repeat:
 		reiser4_tap_relse(&tap);
 
 		if (result >= 0)
-			f->f_version = inode_query_iversion(inode);
+			(void)inode;
 	} else if (result == -E_NO_NEIGHBOR || result == -ENOENT)
 		result = 0;
 	reiser4_tap_done(&tap);

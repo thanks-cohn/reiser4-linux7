@@ -1,3 +1,4 @@
+#include "compat/vfs_7x.h"
 #include "compat/linux7.h"
 #include "compat_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
@@ -262,7 +263,7 @@ init_fake_inode(struct super_block *super, struct inode *fake,
 {
 	assert("nikita-2168", fake->i_state & I_NEW);
 	fake->i_mapping->a_ops = &formatted_fake_as_ops;
-	inode_attach_wb(fake, NULL);
+	/* Linux 7.x: inode_attach_wb no longer exported to modules */
 	*pfake = fake;
 	/* NOTE-NIKITA something else? */
 	unlock_new_inode(fake);
