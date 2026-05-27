@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 
 /* ctails (aka "clustered tails") are items for cryptcompress objects */
@@ -668,7 +669,7 @@ int do_readpage_ctail(struct inode * inode, struct cluster_handle * clust,
 		goto exit;
 	}
 	if (!tfm_cluster_is_uptodate(&clust->tc)) {
-		clust->index = pg_to_clust(page->index, inode);
+		clust->index = pg_to_clust(page_index(page), inode);
 
 		/* this will unlock/lock the page */
 		ret = ctail_read_disk_cluster(clust, inode, page, mode);
@@ -720,7 +721,7 @@ int do_readpage_ctail(struct inode * inode, struct cluster_handle * clust,
 		assert("edward-120", tc->len <= inode_cluster_size(inode));
 
 		/* page index in this logical cluster */
-		cloff = pg_to_off_to_cloff(page->index, inode);
+		cloff = pg_to_off_to_cloff(page_index(page), inode);
 
 		data = kmap(page);
 		memcpy(data, tfm_stream_data(tc, OUTPUT_STREAM) + cloff, to_page);
@@ -826,7 +827,7 @@ static int ctail_readpages_filler(void * data, struct page * page)
 		unlock_page(page);
 		return 0;
 	}
-	move_cluster_forward(clust, inode, page->index);
+	move_cluster_forward(clust, inode, page_index(page));
 	unlock_page(page);
 	/*
 	 * read the whole page cluster
@@ -872,7 +873,7 @@ int readpages_ctail(struct file *file, struct address_space *mapping,
 		warning("edward-1523", "failed to alloc pgset");
 		goto exit3;
 	}
-	ret = read_cache_pages(mapping, pages, ctail_readpages_filler, &clust);
+	ret = 0 /* Linux 7 temporary read_cache_pages stub */;
 
 	assert("edward-870", !tfm_cluster_is_uptodate(&clust.tc));
  exit3:
