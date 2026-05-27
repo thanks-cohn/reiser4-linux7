@@ -4,7 +4,6 @@
 #include <linux/mm.h>
 #include <linux/pagemap.h>
 #include <linux/pagevec.h>
-#include <linux/folio.h>
 
 /*
  * Linux 7.x MM compatibility layer
