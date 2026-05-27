@@ -11,7 +11,7 @@
 
 /* page->index compatibility */
 #ifndef page_index
-#define page_index(page) folio_index(page_folio(page))
+#define page_index(page) ((page)->index)
 #endif
 
 /* wait_on_page_locked modernization */
@@ -41,8 +41,10 @@
 /* temporary Linux 7 pagevec compatibility            */
 /* -------------------------------------------------- */
 
+
 struct pagevec {
     unsigned int nr;
+    struct page *pages[PAGEVEC_SIZE];
 };
 
 static inline void pagevec_init(struct pagevec *pvec)
@@ -54,4 +56,5 @@ static inline void pagevec_release(struct pagevec *pvec)
 {
     pvec->nr = 0;
 }
+
 
