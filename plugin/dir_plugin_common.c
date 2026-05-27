@@ -31,9 +31,7 @@ struct dentry *get_parent_common(struct inode *child)
 	 */
 
 	s = child->i_sb;
-	memset(&dotdot, 0, sizeof(dotdot));
-	dotdot.d_name.name = "..";
-	dotdot.d_name.len = 2;
+	memset(&dotdot, 0, sizeof(dotdot)); /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
 	dotdot.d_op = &get_super_private(s)->ops.dentry;
 
 	result = reiser4_lookup_name(child, &dotdot, &key);
@@ -344,9 +342,7 @@ int reiser4_dir_done_common(struct inode *object/* object being deleted */)
 		return RETERR(-ENOSPC);
 
 	memset(&goodby_dots, 0, sizeof goodby_dots);
-	entry.obj = goodby_dots.d_inode = object;
-	goodby_dots.d_name.name = ".";
-	goodby_dots.d_name.len = 1;
+	entry.obj = goodby_dots.d_inode = object; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
 	result = reiser4_rem_entry_common(object, &goodby_dots, &entry);
 	reiser4_free_dentry_fsdata(&goodby_dots);
 	if (unlikely(result != 0 && result != -ENOMEM && result != -ENOENT))
@@ -373,9 +369,7 @@ int reiser4_detach_common(struct inode *object, struct inode *parent)
 	   @object, viz. object whose key is stored in dotdot
 	   entry. Wouldn't work with hard-links on directories. */
 	memset(&goodby_dots, 0, sizeof goodby_dots);
-	entry.obj = goodby_dots.d_inode = parent;
-	goodby_dots.d_name.name = "..";
-	goodby_dots.d_name.len = 2;
+	entry.obj = goodby_dots.d_inode = parent; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
 	result = reiser4_rem_entry_common(object, &goodby_dots, &entry);
 	reiser4_free_dentry_fsdata(&goodby_dots);
 	if (result == 0) {
@@ -553,18 +547,14 @@ static int create_dot_dotdot(struct inode *object/* object to create dot and
 
 	memset(&entry, 0, sizeof entry);
 	memset(&dots_entry, 0, sizeof dots_entry);
-	entry.obj = dots_entry.d_inode = object;
-	dots_entry.d_name.name = ".";
-	dots_entry.d_name.len = 1;
+	entry.obj = dots_entry.d_inode = object; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
 	result = reiser4_add_entry_common(object, &dots_entry, NULL, &entry);
 	reiser4_free_dentry_fsdata(&dots_entry);
 
 	if (result == 0) {
 		result = reiser4_add_nlink(object, object, 0);
 		if (result == 0) {
-			entry.obj = dots_entry.d_inode = parent;
-			dots_entry.d_name.name = "..";
-			dots_entry.d_name.len = 2;
+			entry.obj = dots_entry.d_inode = parent; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
 			result = reiser4_add_entry_common(object,
 						  &dots_entry, NULL, &entry);
 			reiser4_free_dentry_fsdata(&dots_entry);
