@@ -129,12 +129,21 @@ static inline void put_pages_list(struct list_head *pages)
 /* -------------------------------------------------- */
 
 #ifndef grab_cache_page_write_begin
+
 static inline struct page *
 grab_cache_page_write_begin(struct address_space *mapping,
                             pgoff_t index,
                             unsigned flags)
 {
-    return grab_cache_page(mapping, index);
+    struct folio *folio;
+
+    folio = filemap_grab_folio(mapping, index);
+
+    if (IS_ERR(folio))
+        return NULL;
+
+    return &folio->page;
 }
+
 #endif
 
