@@ -335,7 +335,7 @@ static int paste_entry(const coord_t * coord /* coord of item */ ,
 	name = entry->name->name;
 	len = entry->name->len;
 	if (is_longname(name, len)) {
-		strcpy((unsigned char *)dent->name, name);
+		memcpy((unsigned char *)dent->name, name, len);
 		put_unaligned(0, &dent->name[len]);
 	}
 	return 0;
