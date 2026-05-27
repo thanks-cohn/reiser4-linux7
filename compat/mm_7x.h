@@ -112,3 +112,13 @@ static inline void put_pages_list(struct list_head *pages)
 }
 #endif
 
+
+
+/* -------------------------------------------------- */
+/* dirty page compatibility                           */
+/* -------------------------------------------------- */
+
+#ifndef set_page_dirty_notag
+#define set_page_dirty_notag(page) set_page_dirty(page)
+#endif
+
