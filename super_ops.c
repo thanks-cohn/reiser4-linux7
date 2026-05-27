@@ -422,7 +422,7 @@ struct super_operations reiser4_super_operations = {
  *
  * This is to be called by reiser4_get_sb. Mounts filesystem.
  */
-static int fill_super(struct super_block *super, void *data, int silent)
+int reiser4_fill_super(struct super_block *super, void *data, int silent)
 {
 	reiser4_context ctx;
 	int result;
