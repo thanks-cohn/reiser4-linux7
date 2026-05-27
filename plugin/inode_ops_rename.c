@@ -80,7 +80,7 @@ static int replace_name(struct inode *to_inode,	/* inode where @from_coord is
 
 		/* NOTE-NIKITA consider calling plugin method in stead of
 		   accessing inode fields directly. */
-		from_dir->i_mtime = current_time(from_dir);
+		inode_set_mtime_to_ts(from_dir, current_time(from_dir));
 	} else {
 		warning("nikita-2326", "Unexpected item type");
 		result = RETERR(-EIO);
@@ -299,7 +299,7 @@ int reiser4_update_dir(struct inode *);
    entry. This should be re-considered when more than one different
    directory plugin will be implemented.
 */
-int reiser4_rename2_common(struct user_namespace *mnt_userns,
+int reiser4_rename2_common(struct mnt_idmap *idmap,
 			   struct inode *old_dir /* directory where @old
 						  * is located */ ,
 			   struct dentry *old_name /* old name */ ,
@@ -610,8 +610,8 @@ int reiser4_rename2_common(struct user_namespace *mnt_userns,
 			memset(dotdot_entry, 0, sizeof(*dotdot_entry));
 			dotdot_entry->obj = old_dir;
 			memset(dotdot_name, 0, sizeof(*dotdot_name));
-			dotdot_name->d_name.name = "..";
-			dotdot_name->d_name.len = 2;
+			/* Linux 7.x: d_name.name readonly */
+			/* Linux 7.x: d_name.len readonly */
 			/*
 			 * allocate ->d_fsdata on the stack to avoid using
 			 * reiser4_get_dentry_fsdata(). Locking is not needed,
@@ -659,7 +659,7 @@ int reiser4_rename2_common(struct user_namespace *mnt_userns,
 }
 
 #if 0
-int reiser4_rename_common(struct user_namespace *mnt_userns,
+int reiser4_rename_common(struct mnt_idmap *idmap,
 			  struct inode *old_dir /* directory where @old
 						 * is located */ ,
 			  struct dentry *old_name /* old name */ ,
