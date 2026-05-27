@@ -1,3 +1,4 @@
+#include "compat/vfs_7x.h"
 #include "compat/linux7.h"
 /* Copyright 2003 by Hans Reiser, licensing governed by reiser4/README */
 

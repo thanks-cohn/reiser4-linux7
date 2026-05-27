@@ -1,3 +1,5 @@
+#include "compat/vfs_7x.h"
+#include "../compat/folio_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by
  * reiser4/README */
 
@@ -93,7 +95,7 @@ static reiser4_plugin_ops file_plugin_ops = {
 
 static struct inode_operations         null_i_ops = {.create = NULL};
 static struct file_operations          null_f_ops = {.owner = NULL};
-static struct address_space_operations null_a_ops = {.writepage = NULL};
+static struct address_space_operations null_a_ops = {};
 
 /*
  * Reiser4 provides for VFS either dispatcher, or common (fop,
@@ -128,22 +130,21 @@ static struct file_operations regular_file_f_ops = {
 	.open = reiser4_open_dispatch,
 	.release = reiser4_release_dispatch,
 	.fsync = reiser4_sync_file_common,
-	.splice_read = generic_file_splice_read,
+	
 };
 static struct address_space_operations regular_file_a_ops = {
-	.writepage = reiser4_writepage,
-	.readpage = reiser4_readpage_dispatch,
+	
+	.read_folio = reiser4_nx_read_folio,
 	//.sync_page = block_sync_page,
 	.writepages = reiser4_writepages_dispatch,
-	.set_page_dirty = reiser4_set_page_dirty,
-	.readpages = reiser4_readpages_dispatch,
-	.write_begin = reiser4_write_begin_dispatch,
-	.write_end = reiser4_write_end_dispatch,
+	.dirty_folio = reiser4_nx_dirty_folio,
+	.readahead = reiser4_nx_readahead,
+	.write_begin = reiser4_nx_write_begin,
+	.write_end = reiser4_nx_write_end,
 	.bmap = reiser4_bmap_dispatch,
-	.invalidatepage = reiser4_invalidatepage,
-	.releasepage = reiser4_releasepage,
-	.migratepage = reiser4_migratepage,
-	.batch_lock_tabu = 1
+	.invalidate_folio = reiser4_nx_invalidate_folio,
+	.release_folio = reiser4_nx_release_folio,
+	.migrate_folio = reiser4_nx_migrate_folio,
 };
 
 /* VFS methods for symlink files */
@@ -168,7 +169,7 @@ static struct inode_operations directory_i_ops = {
 	.link = reiser4_link_common,
 	.unlink = reiser4_unlink_common,
 	.symlink = reiser4_symlink_common,
-	.mkdir = reiser4_mkdir_common,
+	
 	.rmdir = reiser4_unlink_common,
 	.mknod = reiser4_mknod_common,
 	.rename = reiser4_rename2_common,
@@ -179,7 +180,7 @@ static struct inode_operations directory_i_ops = {
 static struct file_operations directory_f_ops = {
 	.llseek = reiser4_llseek_dir_common,
 	.read = generic_read_dir,
-	.iterate = reiser4_iterate_common,
+	.iterate_shared = reiser4_iterate_common,
 	.release = reiser4_release_dir_common,
 	.fsync = reiser4_sync_common
 };
