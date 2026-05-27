@@ -122,3 +122,19 @@ static inline void put_pages_list(struct list_head *pages)
 #define set_page_dirty_notag(page) set_page_dirty(page)
 #endif
 
+
+
+/* -------------------------------------------------- */
+/* write_begin compatibility                          */
+/* -------------------------------------------------- */
+
+#ifndef grab_cache_page_write_begin
+static inline struct page *
+grab_cache_page_write_begin(struct address_space *mapping,
+                            pgoff_t index,
+                            unsigned flags)
+{
+    return grab_cache_page(mapping, index);
+}
+#endif
+
