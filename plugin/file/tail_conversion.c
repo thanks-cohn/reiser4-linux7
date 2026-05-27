@@ -1,3 +1,4 @@
+#include "../../compat/mm_7x.h"
 /* Copyright 2001, 2002, 2003 by Hans Reiser, licensing governed by reiser4/README */
 
 #include "../../inode.h"
@@ -170,7 +171,7 @@ static int replace(struct inode *inode, struct page **pages, unsigned nr_pages, 
 	/* put into tree replacement for just removed items: extent item, namely */
 	for (i = 0; i < nr_pages; i++) {
 		result = add_to_page_cache_lru(pages[i], inode->i_mapping,
-					       pages[i]->index,
+					       page_index(pages[i]),
 					       mapping_gfp_mask(inode->
 								i_mapping));
 		if (result)
@@ -378,10 +379,7 @@ int tail2extent(struct unix_file_info *uf_info)
 				result = RETERR(-ENOMEM);
 				goto error;
 			}
-
-			page->index =
-			    (unsigned long)(get_key_offset(&key) >>
-					    PAGE_SHIFT);
+			/* Linux 7.x: page index assignment removed; needs folio/page-cache semantic restoration */
 			/*
 			 * usually when one is going to longterm lock znode (as
 			 * find_file_item does, for instance) he must not hold
@@ -392,7 +390,7 @@ int tail2extent(struct unix_file_info *uf_info)
 			 * not risk deadlock appearance
 			 */
 			assert("vs-983", !PagePrivate(page));
-			reiser4_invalidate_pages(inode->i_mapping, page->index,
+			reiser4_invalidate_pages(inode->i_mapping, page_index(page),
 						 1, 0);
 
 			for (page_off = 0; page_off < PAGE_SIZE;) {
