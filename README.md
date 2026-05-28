@@ -1,3 +1,49 @@
+# Reiser4-NX Modernization Progress
+
+## Current Status
+
+Active Reiser4 modernization effort targeting Ubuntu 24.04 / Linux 6.8.
+
+Recent progress:
+
+- Reiser4 builds as a kernel module.
+- Module loads into kernel space.
+- Loopback images can be formatted.
+- Filesystem can mount.
+- Root stat works.
+- Regular file creation works.
+- File write/read works.
+- Transaction and flush paths are reached.
+- Directory creation failure was narrowed.
+- Latent mkdir reservation bug found in plugin/dir_plugin_common.c.
+- Generated kernel/build artifacts removed from Git tracking.
+- Remaining major failure is inode eviction / teardown during unmount.
+
+## What Changed From the Original Codebase
+
+- Code now reaches real runtime testing.
+- Build junk is ignored: *.o, *.cmd, *.d, Module.symvers, modules.order, *.img.
+- mkdir failure was narrowed to directory creation path.
+- estimate_init() was found calculating reservation cost into res but returning 0.
+- Modern Linux teardown exposed inode eviction failure before clear_inode().
+- Shrinker path likely needs modernization with shrinker_alloc().
+
+## Current Known Failure
+
+Unmount currently reaches clear_inode through reiser4_evict_inode and trips a kernel BUG.
+
+## Next Work
+
+- Validate whether estimate_init() fix advances or fixes mkdir.
+- Instrument reiser4_evict_inode() before clear_inode().
+- Print inode state, dirty flags, private pointer, mapping pointer, refcount, and link count.
+- Modernize shrinker registration.
+- Keep documenting changed failure modes in docs/status/.
+
+See docs/status/LATENT_BUG.md and docs/status/EVICTION_TRACE_NOTES.md.
+
+---
+
 # reiser4-linux7
 
 
