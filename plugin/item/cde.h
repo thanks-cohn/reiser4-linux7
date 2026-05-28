@@ -19,7 +19,7 @@ typedef struct cde_unit_header {
 
 typedef struct cde_item_format {
 	d16 num_of_entries;
-	cde_unit_header entry[0];
+	cde_unit_header entry[];
 } cde_item_format;
 
 struct cde_entry {

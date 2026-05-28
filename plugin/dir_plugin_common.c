@@ -514,7 +514,7 @@ estimate_init(struct inode *parent, struct inode *object)
 	/* reiser4_add_nlink(parent) */
 	res += inode_file_plugin(parent)->estimate.update(parent);
 
-	return 0;
+	return res;
 }
 
 /* helper function for reiser4_dir_init_common(). Create "." and ".." */
