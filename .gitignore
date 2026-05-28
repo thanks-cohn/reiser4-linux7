@@ -9,3 +9,10 @@ Module.symvers
 modules.order
 .*.cmd
 .tmp_versions/
+reiser4-test.img
+
+*.o
+*.cmd
+*.d
+reiser4-test.img
+reiser4-test.img

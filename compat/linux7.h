@@ -54,13 +54,7 @@
 
 #include <linux/shrinker.h>
 
-#ifndef register_shrinker
-#define register_shrinker(shrinker) \
-        shrinker_register(shrinker)
-
-#define unregister_shrinker(shrinker) \
-        shrinker_free(shrinker)
-#endif
+/* Linux 6.8 shrinkers are handled explicitly in fsdata.c. */
 
 
 

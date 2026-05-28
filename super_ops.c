@@ -229,10 +229,100 @@ static void reiser4_evict_inode(struct inode *inode)
 			fplug->delete_object(inode);
 	}
 
-	truncate_inode_pages_final(&inode->i_data);
+	printk(KERN_ERR
+	       "REISER4_EVICT ino=%lu state=0x%lx nlink=%u count=%d mapping=%p nrpages=%lu private=%p\n",
+	       inode->i_ino,
+	       inode->i_state,
+	       inode->i_nlink,
+	       atomic_read(&inode->i_count),
+	       inode->i_mapping,
+	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL,
+	       inode->i_private);
+
+	filemap_write_and_wait(&inode->i_data);
+
+printk(KERN_ERR
+"BUMRUSH26_WRITEBACK_DONE ino=%lu nrpages=%lu\n",
+inode->i_ino,
+inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+
+truncate_inode_pages(&inode->i_data, 0);
+
+printk(KERN_ERR
+"BUMRUSH26_TRUNCATE_PAGES ino=%lu nrpages=%lu\n",
+inode->i_ino,
+inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+
+invalidate_mapping_pages(inode->i_mapping, 0, -1);
+
+printk(KERN_ERR
+"BUMRUSH26_INVALIDATE_MAPPING ino=%lu nrpages=%lu\n",
+inode->i_ino,
+inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+
+truncate_inode_pages_final(&inode->i_data);
+
+	printk(KERN_ERR
+	       "REISER4_POST_TRUNCATE ino=%lu state=0x%lx nrpages=%lu\n",
+	       inode->i_ino,
+	       inode->i_state,
+	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+
+	invalidate_inode_buffers(inode);
+
+	printk(KERN_ERR
+	       "REISER4_POST_INVALIDATE ino=%lu state=0x%lx nlink=%u count=%d private=%p\n",
+	       inode->i_ino,
+	       inode->i_state,
+	       inode->i_nlink,
+	       atomic_read(&inode->i_count),
+	       inode->i_private);
+
 	inode->i_blocks = 0;
-	clear_inode(inode);
-	reiser4_exit_context(ctx);
+
+if (inode->i_mapping &&
+    inode->i_mapping->nrpages != 0) {
+
+{
+struct folio *folio;
+
+folio = filemap_get_folio(inode->i_mapping, 0);
+
+if (IS_ERR(folio)) {
+
+printk(KERN_ERR
+"BUMRUSH26_FOLIO_ERR ino=%lu err=%ld nrpages=%lu\n",
+inode->i_ino,
+PTR_ERR(folio),
+inode->i_mapping->nrpages);
+
+folio = NULL;
+}
+
+printk(KERN_ERR
+"BUMRUSH26_EVICT refusing clear_inode ino=%lu nrpages=%lu private=%p state=0x%lx folio=%p dirty=%d writeback=%d private_folio=%d mapped=%d refs=%d\n",
+inode->i_ino,
+inode->i_mapping->nrpages,
+inode->i_private,
+inode->i_state,
+folio,
+folio ? folio_test_dirty(folio) : -1,
+folio ? folio_test_writeback(folio) : -1,
+folio ? folio_test_private(folio) : -1,
+folio ? folio_mapped(folio) : -1,
+folio ? folio_ref_count(folio) : -1);
+
+if (folio)
+folio_put(folio);
+}
+
+/* TEMPORARY LINUX 6.8 PORT SAFETY */
+reiser4_exit_context(ctx);
+return;
+}
+
+clear_inode(inode);
+reiser4_exit_context(ctx);
 }
 
 /**

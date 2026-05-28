@@ -1,1 +1,1 @@
-savedcmd_Module.symvers :=  /usr/lib/modules/7.0.3-zen1-2-zen/build/scripts/mod/modpost -M    -a    -N  -o Module.symvers -n -T modules.order -i /usr/lib/modules/7.0.3-zen1-2-zen/build/Module.symvers -e 
+savedcmd_/home/reiser/reiser4-linux7/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/reiser/reiser4-linux7/Module.symvers -T /home/reiser/reiser4-linux7/modules.order -i Module.symvers -e 

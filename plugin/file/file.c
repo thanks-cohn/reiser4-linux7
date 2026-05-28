@@ -1303,7 +1303,7 @@ int writepages_unix_file(struct address_space *mapping,
 		}
 		if (to_capture <= 0)
 			/* there may be left more pages */
-			__mark_inode_dirty(inode, I_DIRTY_PAGES);
+			mark_inode_dirty(inode);
 
 		drop_nonexclusive_access(uf_info);
 		if (result < 0) {

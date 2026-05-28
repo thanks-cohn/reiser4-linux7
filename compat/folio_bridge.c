@@ -54,7 +54,28 @@ void reiser4_nx_invalidate_folio(struct folio *folio,
 
 bool reiser4_nx_release_folio(struct folio *folio, gfp_t gfp)
 {
-    return true;
+	bool ret;
+
+	printk(KERN_ERR
+	"REISER4_RELEASE_FOLIO folio=%p index=%lu dirty=%d writeback=%d private=%d mapped=%d\n",
+	folio,
+	folio->index,
+	folio_test_dirty(folio),
+	folio_test_writeback(folio),
+	folio_test_private(folio),
+	folio_mapped(folio));
+
+	ret = try_to_free_buffers(folio);
+
+	printk(KERN_ERR
+	"REISER4_RELEASE_RESULT folio=%p ret=%d private=%d dirty=%d writeback=%d\n",
+	folio,
+	ret,
+	folio_test_private(folio),
+	folio_test_dirty(folio),
+	folio_test_writeback(folio));
+
+	return ret;
 }
 
 int reiser4_nx_migrate_folio(struct address_space *mapping,

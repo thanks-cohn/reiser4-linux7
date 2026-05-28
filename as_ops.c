@@ -199,6 +199,15 @@ int jnode_is_releasable(jnode * node/* node to check */)
 	assert_spin_locked(&(node->guard));
 	assert_spin_locked(&(node->load));
 
+printk(KERN_ERR
+"BUMRUSH26_RELEASABLE node=%p d_count=%d block=%llu state=0x%lx znode=%d unformatted=%d\n",
+node,
+atomic_read(&node->d_count),
+(unsigned long long)jnode_get_block(node),
+node->state,
+jnode_is_znode(node),
+jnode_is_unformatted(node));
+
 	/* is some thread is currently using jnode page, later cannot be
 	 * detached */
 	if (atomic_read(&node->d_count) != 0)
@@ -241,7 +250,11 @@ int jnode_is_releasable(jnode * node/* node to check */)
 	if (!jnode_is_znode(node) && !jnode_is_unformatted(node))
 		return 0;
 
-	return 1;
+	printk(KERN_ERR
+"BUMRUSH26_RELEASEPAGE_SUCCESS page=%p\n",
+page);
+
+return 1;
 }
 
 /*
@@ -298,7 +311,11 @@ int reiser4_releasepage(struct page *page, gfp_t gfp UNUSED_ARG)
 		/* we are under memory pressure so release jnode also. */
 		jput(node);
 
-		return 1;
+		printk(KERN_ERR
+"BUMRUSH26_RELEASEPAGE_SUCCESS page=%p\n",
+page);
+
+return 1;
 	} else {
 		spin_unlock(&(node->load));
 		spin_unlock_jnode(node);

@@ -3449,7 +3449,7 @@ static int capture_anon_pages(struct address_space * mapping, pgoff_t * index,
 		assert("edward-1078", ergo(found > 0, count > 0));
 		if (to_capture <= 0)
 			/* there may be left more pages */
-			__mark_inode_dirty(inode, I_DIRTY_PAGES);
+			mark_inode_dirty(inode);
 		result = count;
 	}
       out:

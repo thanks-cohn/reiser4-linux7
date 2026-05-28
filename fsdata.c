@@ -55,11 +55,7 @@ static unsigned long d_cursor_shrink_count (struct shrinker *shrink,
  * assign higher "seeks" value to d_cursor cache, so that it will be
  * shrunk only if system is really tight on memory.
  */
-static struct shrinker d_cursor_shrinker = {
-	.count_objects = d_cursor_shrink_count,
-	.scan_objects = d_cursor_shrink_scan,
-	.seeks = DEFAULT_SEEKS << 3
-};
+static struct shrinker *d_cursor_shrinker;
 
 /**
  * reiser4_init_d_cursor - create d_cursor cache
@@ -74,7 +70,17 @@ int reiser4_init_d_cursor(void)
 	if (d_cursor_cache == NULL)
 		return RETERR(-ENOMEM);
 
-	register_shrinker(&d_cursor_shrinker);
+	d_cursor_shrinker = shrinker_alloc(0, "reiser4-d_cursor");
+	if (d_cursor_shrinker == NULL) {
+		destroy_reiser4_cache(&d_cursor_cache);
+		return RETERR(-ENOMEM);
+	}
+
+	d_cursor_shrinker->count_objects = d_cursor_shrink_count;
+	d_cursor_shrinker->scan_objects = d_cursor_shrink_scan;
+	d_cursor_shrinker->seeks = DEFAULT_SEEKS << 3;
+
+	shrinker_register(d_cursor_shrinker);
 	return 0;
 }
 
@@ -85,7 +91,10 @@ int reiser4_init_d_cursor(void)
  */
 void reiser4_done_d_cursor(void)
 {
-	unregister_shrinker(&d_cursor_shrinker);
+	if (d_cursor_shrinker != NULL) {
+		shrinker_free(d_cursor_shrinker);
+		d_cursor_shrinker = NULL;
+	}
 
 	destroy_reiser4_cache(&d_cursor_cache);
 }
