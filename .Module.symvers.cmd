@@ -1,1 +1,0 @@
-savedcmd_/home/reiser/reiser4-linux7/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/reiser/reiser4-linux7/Module.symvers -T /home/reiser/reiser4-linux7/modules.order -i Module.symvers -e 

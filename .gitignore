@@ -16,3 +16,13 @@ reiser4-test.img
 *.d
 reiser4-test.img
 reiser4-test.img
+
+# kernel/build artifacts
+*.o
+*.cmd
+*.d
+Module.symvers
+modules.order
+*.mod
+*.ko
+*.img
