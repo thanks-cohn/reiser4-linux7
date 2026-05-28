@@ -544,7 +544,6 @@ int reiser4_writepage(struct page *page,
 static int formatted_set_page_dirty(struct page *page)
 {
 	assert("nikita-2173", page != NULL);
-	BUG();
 	return filemap_dirty_folio(page->mapping, page_folio(page));
 }
 
