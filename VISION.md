@@ -65,3 +65,16 @@ A filesystem should be able to carry civilization’s weirdness gracefully.
 Reiser4 was one of the few filesystems that ever seemed philosophically willing to attempt that.
 
 Reiser4-NX exists because that idea deserves another chance.
+
+--------------------------------------------
+A FILE SYSTEM THE USER CAN FULLY CONTROL!
+
+
+
+
+
+
+
+
+
+
