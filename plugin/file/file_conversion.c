@@ -681,8 +681,7 @@ int reiser4_write_begin_dispatch(struct file *file,
 	struct inode * inode = file_inode(file);
 
 	index = pos >> PAGE_SHIFT;
-	page = grab_cache_page_write_begin(mapping, index,
-					   0);
+	page = grab_cache_page_write_begin(mapping, index);
 	*pagep = page;
 	if (!page)
 		return -ENOMEM;

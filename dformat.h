@@ -17,7 +17,7 @@
 #include "debug.h"
 
 #include <asm/byteorder.h>
-#include <linux/unaligned.h>
+#include <asm/unaligned.h>
 #include <linux/types.h>
 
 typedef __u8 d8;

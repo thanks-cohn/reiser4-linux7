@@ -25,23 +25,23 @@ void reiser4_nx_readahead(struct readahead_control *rac)
 {
 }
 
-int reiser4_nx_write_begin(const struct kiocb *iocb,
-                           struct address_space *mapping,
-                           loff_t pos,
-                           unsigned len,
-                           struct folio **foliop,
-                           void **fsdata)
+int reiser4_nx_write_begin(struct file *file,
+struct address_space *mapping,
+loff_t pos,
+unsigned len,
+struct page **pagep,
+void **fsdata)
 {
     return 0;
 }
 
-int reiser4_nx_write_end(const struct kiocb *iocb,
-                         struct address_space *mapping,
-                         loff_t pos,
-                         unsigned len,
-                         unsigned copied,
-                         struct folio *folio,
-                         void *fsdata)
+int reiser4_nx_write_end(struct file *file,
+struct address_space *mapping,
+loff_t pos,
+unsigned len,
+unsigned copied,
+struct page *page,
+void *fsdata)
 {
     return copied;
 }

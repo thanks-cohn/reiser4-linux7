@@ -106,11 +106,7 @@ static inline void pagevec_remove_exceptionals(struct pagevec *pvec)
 }
 #endif
 
-#ifndef put_pages_list
-static inline void put_pages_list(struct list_head *pages)
-{
-}
-#endif
+/* Ubuntu 6.8 already provides put_pages_list */
 
 
 
@@ -128,24 +124,7 @@ static inline void put_pages_list(struct list_head *pages)
 /* write_begin compatibility                          */
 /* -------------------------------------------------- */
 
-#ifndef grab_cache_page_write_begin
-
-static inline struct page *
-grab_cache_page_write_begin(struct address_space *mapping,
-                            pgoff_t index,
-                            unsigned flags)
-{
-    struct folio *folio;
-
-    folio = filemap_grab_folio(mapping, index);
-
-    if (IS_ERR(folio))
-        return NULL;
-
-    return &folio->page;
-}
-
-#endif
+/* Ubuntu 6.8 already provides grab_cache_page_write_begin */
 
 
 

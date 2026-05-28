@@ -22,7 +22,7 @@
 
 /* inode state compatibility */
 #ifndef inode_state
-#define inode_state(inode, flag) (inode_state_read(inode) & (flag))
+#define inode_state(inode, flag) ((inode)->i_state & (flag))
 #endif
 
 /* dirty page compatibility */
