@@ -170,7 +170,7 @@ static struct inode_operations directory_i_ops = {
 	.link = reiser4_link_common,
 	.unlink = reiser4_unlink_common,
 	.symlink = reiser4_symlink_common,
-	
+	.mkdir = reiser4_mkdir_common,
 	.rmdir = reiser4_unlink_common,
 	.mknod = reiser4_mknod_common,
 	.rename = reiser4_rename2_common,
