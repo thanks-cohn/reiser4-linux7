@@ -26,3 +26,30 @@ Use this matrix to track proof runs. Do not infer readiness from partial results
 | V3 personal smoke | `smoke_v3_repeat_from_clean_boot.sh` | Post-reboot repeat of V3 validation | boot recorded, repeat stress passes, final clean state | `artifacts/smoke_v3_repeat_from_clean_boot-<timestamp>/summary.txt` | Final gate; V3 personal status not READY_TO_TRY until pass |
 
 `V3_PERSONAL_SMOKE_STATUS=READY_TO_TRY` is valid only when the suite summary reports all required V3 personal smoke tests passed with no stuck module, no stuck `ktxnmgrd`/`entd`, no stuck loop device, and no dmesg danger.
+
+## V6 production-value smoke suite
+
+These rows define evidence gates only. They do not claim production readiness or V6 readiness until the configured suite passes and artifacts are reviewed.
+
+| Suite | Test | Purpose | Pass criterion | Artifact | Current expected result |
+| --- | --- | --- | --- | --- | --- |
+| V6 production-value smoke | `v6_smoke_clean_build_matrix.sh` | Build module against current Ubuntu LTS headers | `reiser4.ko` builds and logs warnings, size, sha256, commit | `artifacts/v6_smoke_clean_build_matrix-<timestamp>/summary.txt` | Evidence gate; may pass with matching headers |
+| V6 production-value smoke | `v6_smoke_module_lifecycle_100.sh` | 100 clean insmod/rmmod cycles | all cycles unload with no stuck refs or dmesg danger | `artifacts/v6_smoke_module_lifecycle_100-<timestamp>/summary.txt` | Exposes dirty module lifecycle blockers |
+| V6 production-value smoke | `v6_smoke_mkfs_mount_unmount_500.sh` | 500 mkfs/mount/stat/unmount/loop detach/rmmod cycles | all cycles clean with no loop/module leaks | `artifacts/v6_smoke_mkfs_mount_unmount_500-<timestamp>/summary.txt` | Exposes mount/teardown blockers |
+| V6 production-value smoke | `v6_smoke_full_v1_100.sh` | 100 full V1 lifecycle cycles | create/write/read/rename/delete/remount/verify all pass | `artifacts/v6_smoke_full_v1_100-<timestamp>/summary.txt` | Currently may be blocked by mkdir EPERM |
+| V6 production-value smoke | `v6_smoke_v3_proof_30.sh` | Repeat existing V3 proof 30 times | all V3 proof cycles pass with clean dmesg | `artifacts/v6_smoke_v3_proof_30-<timestamp>/summary.txt` | Blocked if V3 proof is absent or failing |
+| V6 production-value smoke | `v6_smoke_teardown_after_failure_100.sh` | 100 deliberate harmless failures | cleanup leaves no module/thread/loop state | `artifacts/v6_smoke_teardown_after_failure_100-<timestamp>/summary.txt` | Targets known teardown blockers |
+| V6 production-value smoke | `v6_smoke_fsck_clean_and_dirty.sh` | fsck after clean and dirty-style shutdown | fsck outputs and exit codes are predictable | `artifacts/v6_smoke_fsck_clean_and_dirty-<timestamp>/summary.txt` | Required recovery evidence |
+| V6 production-value smoke | `v6_smoke_hash_manifest_integrity_100k.sh` | 100k-file hash manifest integrity | no missing/extra/size/hash mismatch after remount | `artifacts/v6_smoke_hash_manifest_integrity_100k-<timestamp>/summary.txt` | Required no-silent-corruption gate |
+| V6 production-value smoke | `v6_smoke_directory_scale_1m.sh` | Large directory tree scale | create/list/stat/delete complete with timings | `artifacts/v6_smoke_directory_scale_1m-<timestamp>/summary.txt` | Heavy scale gate |
+| V6 production-value smoke | `v6_smoke_nested_tree_depth.sh` | Deep nested tree operations | create/place/rename/delete/remount/fsck survive | `artifacts/v6_smoke_nested_tree_depth-<timestamp>/summary.txt` | Boundary/depth gate |
+| V6 production-value smoke | `v6_smoke_rename_delete_storm.sh` | Metadata churn storm | rename/delete/create cycles verify after remount | `artifacts/v6_smoke_rename_delete_storm-<timestamp>/summary.txt` | Corruption/stuck transaction gate |
+| V6 production-value smoke | `v6_smoke_parallel_writers.sh` | Concurrent writers/readers | no failed operations, hangs, or hash mismatches | `artifacts/v6_smoke_parallel_writers-<timestamp>/summary.txt` | Concurrency gate |
+| V6 production-value smoke | `v6_smoke_large_file_streaming.sh` | Large streaming file | write/sync/read/remount hashes match | `artifacts/v6_smoke_large_file_streaming-<timestamp>/summary.txt` | Large-file gate |
+| V6 production-value smoke | `v6_smoke_small_file_pressure.sh` | Many tiny files | sync/remount/fsck/verify no loss or mismatch | `artifacts/v6_smoke_small_file_pressure-<timestamp>/summary.txt` | Metadata pressure gate |
+| V6 production-value smoke | `v6_smoke_real_workload_kernel_tree.sh` | Kernel-tree-like workload | copy/unpack/build-like/delete/remount verify | `artifacts/v6_smoke_real_workload_kernel_tree-<timestamp>/summary.txt` | Real workload gate |
+| V6 production-value smoke | `v6_smoke_real_workload_git.sh` | Git repository workload | clone/status/add/commit/rename/fsck survives remount | `artifacts/v6_smoke_real_workload_git-<timestamp>/summary.txt` | Real workload gate |
+| V6 production-value smoke | `v6_smoke_enospc_inode_exhaustion.sh` | No-space behavior | ENOSPC observed safely; cleanup/remount/fsck pass | `artifacts/v6_smoke_enospc_inode_exhaustion-<timestamp>/summary.txt` | ENOSPC safety gate |
+| V6 production-value smoke | `v6_smoke_long_filename_boundaries.sh` | Filename boundary behavior | lengths work or fail safely with remount verification | `artifacts/v6_smoke_long_filename_boundaries-<timestamp>/summary.txt` | Long-name boundary gate, not implementation work |
+| V6 production-value smoke | `v6_smoke_powercut_sim_loopback.sh` | Safe loopback dirty interruption | stable pre-crash manifest survives fsck/remount | `artifacts/v6_smoke_powercut_sim_loopback-<timestamp>/summary.txt` | Crash/recovery evidence gate |
+| V6 production-value smoke | `v6_smoke_7_day_soak.sh` | Long mixed soak | configured soak completes with clean dmesg/fsck/teardown | `artifacts/v6_smoke_7_day_soak-<timestamp>/summary.txt` | Final soak gate |

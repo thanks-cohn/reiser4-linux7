@@ -126,3 +126,30 @@ Required evidence before any production-value claim:
   names are preserved or failures are reported clearly.
 - No production-value claim if long-name behavior is unknown, untested,
   unrecoverable, or capable of creating false confidence.
+
+## V6 Smoke Gates
+
+V6 production-value candidate status requires these tests, or reviewed successor equivalents, to pass with retained artifacts, summaries, dmesg scans, cleanup state, fsck output where applicable, and git/kernel/reiser4progs version evidence:
+
+1. `tests/v6_smoke_clean_build_matrix.sh`
+2. `tests/v6_smoke_module_lifecycle_100.sh`
+3. `tests/v6_smoke_mkfs_mount_unmount_500.sh`
+4. `tests/v6_smoke_full_v1_100.sh`
+5. `tests/v6_smoke_v3_proof_30.sh`
+6. `tests/v6_smoke_teardown_after_failure_100.sh`
+7. `tests/v6_smoke_powercut_sim_loopback.sh`
+8. `tests/v6_smoke_fsck_clean_and_dirty.sh`
+9. `tests/v6_smoke_hash_manifest_integrity_100k.sh`
+10. `tests/v6_smoke_directory_scale_1m.sh`
+11. `tests/v6_smoke_nested_tree_depth.sh`
+12. `tests/v6_smoke_rename_delete_storm.sh`
+13. `tests/v6_smoke_parallel_writers.sh`
+14. `tests/v6_smoke_large_file_streaming.sh`
+15. `tests/v6_smoke_small_file_pressure.sh`
+16. `tests/v6_smoke_real_workload_kernel_tree.sh`
+17. `tests/v6_smoke_real_workload_git.sh`
+18. `tests/v6_smoke_enospc_inode_exhaustion.sh`
+19. `tests/v6_smoke_long_filename_boundaries.sh`
+20. `tests/v6_smoke_7_day_soak.sh`
+
+Passing these smoke gates still does not equal broad production deployment. It only supports a production-value candidate claim for serious outside testing and sacrificial-disk trials.
