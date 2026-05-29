@@ -1,3 +1,45 @@
+
+# Reiser4-NX Modernization Status
+
+## Current State (2026-05-29)
+
+Reiser4 is no longer a compile-only resurrection project.
+
+Current achievements:
+
+- Builds successfully as an out-of-tree kernel module on Ubuntu 24.04 / Linux 6.8.
+- Produces a working `reiser4.ko`.
+- Formats loopback images via `mkfs.reiser4`.
+- Successfully loads into the kernel.
+- Successfully mounts.
+- Successfully creates files.
+- Successfully writes files.
+- Successfully reads files.
+- Successfully reaches transaction paths.
+- Successfully reaches flush paths.
+
+The remaining failures are no longer broad modernization issues.
+
+The project has advanced into runtime debugging.
+
+Current active frontiers:
+
+1. `convert_ctail()` / `assign_conversion_mode()` NULL dereference.
+2. Directory creation path correctness.
+3. Inode 65536 eviction and teardown behavior.
+4. Clean unmount and module unload stability.
+
+A filesystem that reaches real I/O, real transactions, real flush activity, and reproducible kernel traces is no longer dead code.
+
+It is active engineering.
+
+---
+
+**Milestone**
+
+At approximately 4:44 AM Mexico City time on 2026-05-29, the project crossed from broad porting work into localized runtime debugging.
+
+
 # Reiser4-NX Modernization Progress
 
 ## Current Status
