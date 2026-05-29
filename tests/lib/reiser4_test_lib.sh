@@ -250,3 +250,180 @@ r4_dmesg_scan() {
 	printf 'REISER4_DMESG_CLEAN label=%s\n' "${label}"
 	return 0
 }
+
+# Reiser4-NX V6 production-value smoke-suite helpers.  These are additive so
+# older V1/V2/V3 smoke scripts keep their historical APIs and breadcrumbs.
+r4_reiser4progs_version() {
+	local out=unknown
+	if command -v mkfs.reiser4 >/dev/null 2>&1; then
+		out=$(mkfs.reiser4 -V 2>&1 | head -n 1 || true)
+	elif command -v fsck.reiser4 >/dev/null 2>&1; then
+		out=$(fsck.reiser4 -V 2>&1 | head -n 1 || true)
+	fi
+	[[ -n ${out} ]] || out=unknown
+	printf '%s' "${out}"
+}
+
+r4_module_refcount() {
+	lsmod 2>/dev/null | awk '$1 == "reiser4" {print $3; found=1} END {if (!found) print 0}'
+}
+
+r4_require_clean_start() {
+	local artifact_dir=${1:?artifact dir required}
+	local ok=0
+	r4_state "${artifact_dir}/clean-start-state.txt"
+	if r4_module_loaded; then printf 'V6_RMMOD_FAIL module_ref_stuck=%s preexisting=1\n' "$(r4_module_refcount)"; ok=1; fi
+	if r4_ktxnmgrd_alive; then printf 'V6_KTXNMGRD_STUCK preexisting=1\n'; ok=1; fi
+	if r4_entd_alive; then printf 'V6_ENTD_STUCK preexisting=1\n'; ok=1; fi
+	if r4_any_reiser4_loop_exists; then printf 'V6_LOOP_STUCK preexisting=1\n'; ok=1; fi
+	if r4_deleted_reiser4_loop_exists; then printf 'V6_LOOP_STUCK_DELETED_IMAGE preexisting=1\n'; ok=1; fi
+	return "${ok}"
+}
+
+r4_hash_manifest() {
+	local root=${1:?root required} output_file=${2:?output file required}
+	{
+		printf '# path\tsize\tsha256\n'
+		(cd "${root}" && find . -type f -printf '%P\0' | sort -z | while IFS= read -r -d '' path; do
+			local size hash
+			size=$(stat -c '%s' "${path}" 2>/dev/null || printf 'MISSING')
+			hash=$(sha256sum "${path}" 2>/dev/null | awk '{print $1}' || printf 'MISSING')
+			printf '%s\t%s\t%s\n' "${path}" "${size}" "${hash}"
+		done)
+	} >"${output_file}"
+}
+
+r4_verify_hash_manifest() {
+	local root=${1:?root required} manifest_file=${2:?manifest required} output_file=${3:?output required}
+	local actual expected_paths actual_paths missing=0 extra=0 size_mismatch=0 hash_mismatch=0 checked=0
+	actual=$(mktemp)
+	expected_paths=$(mktemp)
+	actual_paths=$(mktemp)
+	r4_hash_manifest "${root}" "${actual}"
+	awk -F '\t' 'substr($0,1,1) != "#" {print $1}' "${manifest_file}" | sort >"${expected_paths}"
+	awk -F '\t' 'substr($0,1,1) != "#" {print $1}' "${actual}" | sort >"${actual_paths}"
+	{
+		printf 'VERIFY_ROOT=%s\n' "${root}"
+		printf 'MANIFEST=%s\n' "${manifest_file}"
+		printf -- '--- missing files ---\n'
+		comm -23 "${expected_paths}" "${actual_paths}" || true
+		printf -- '--- extra files ---\n'
+		comm -13 "${expected_paths}" "${actual_paths}" || true
+		printf -- '--- mismatches ---\n'
+		while IFS=$'\t' read -r path size hash; do
+			[[ -n ${path} && ${path:0:1} != '#' ]] || continue
+			checked=$((checked + 1))
+			if [[ ! -f ${root}/${path} ]]; then
+				missing=$((missing + 1)); printf 'MISSING\t%s\n' "${path}"; continue
+			fi
+			local got_size got_hash
+			got_size=$(stat -c '%s' "${root}/${path}" 2>/dev/null || printf 'MISSING')
+			if [[ ${got_size} != "${size}" ]]; then size_mismatch=$((size_mismatch + 1)); printf 'SIZE_MISMATCH\t%s\texpected=%s\tactual=%s\n' "${path}" "${size}" "${got_size}"; fi
+			got_hash=$(sha256sum "${root}/${path}" 2>/dev/null | awk '{print $1}' || printf 'MISSING')
+			if [[ ${got_hash} != "${hash}" ]]; then hash_mismatch=$((hash_mismatch + 1)); printf 'HASH_MISMATCH\t%s\texpected=%s\tactual=%s\n' "${path}" "${hash}" "${got_hash}"; fi
+		done <"${manifest_file}"
+		extra=$(comm -13 "${expected_paths}" "${actual_paths}" | wc -l | tr -d ' ')
+		missing=$((missing + $(comm -23 "${expected_paths}" "${actual_paths}" | wc -l | tr -d ' ')))
+		printf 'CHECKED=%s\nMISSING=%s\nEXTRA=%s\nSIZE_MISMATCH=%s\nHASH_MISMATCH=%s\n' "${checked}" "${missing}" "${extra}" "${size_mismatch}" "${hash_mismatch}"
+	} >"${output_file}"
+	rm -f "${actual}" "${expected_paths}" "${actual_paths}"
+	[[ ${missing} -eq 0 && ${extra} -eq 0 && ${size_mismatch} -eq 0 && ${hash_mismatch} -eq 0 ]]
+}
+
+r4_fsck_image() {
+	local image=${1:?image required} output_file=${2:?output required}
+	local rc=0
+	{
+		printf 'FSCK_IMAGE=%s\n' "${image}"
+		if command -v fsck.reiser4 >/dev/null 2>&1; then
+			printf 'FSCK_VERSION=%s\n' "$(fsck.reiser4 -V 2>&1 | head -n 1 || printf unknown)"
+		else
+			printf 'FSCK_VERSION=unknown\n'
+		fi
+		if ! command -v fsck.reiser4 >/dev/null 2>&1; then
+			printf 'FSCK_MISSING=1\n'
+			rc=127
+		else
+			timeout "${R4_FSCK_TIMEOUT:-300}" fsck.reiser4 -y "${image}"
+			rc=$?
+		fi
+		printf 'FSCK_EXIT=%s\n' "${rc}"
+	} >"${output_file}" 2>&1
+	return "${rc}"
+}
+
+r4_v6_init() {
+	TEST_NAME=${1:?test name required}
+	V6_BEGIN_CRUMB=${2:?begin breadcrumb required}
+	ARTIFACT_DIR=$(r4_artifact_dir "${TEST_NAME}")
+	COMMAND_LOG="${ARTIFACT_DIR}/command-log.txt"
+	exec > >(tee -a "${COMMAND_LOG}") 2>&1
+	RESULT=FAIL; FAILED_STAGE=none; SILENT_CORRUPTION=0
+	MODULE_LOADED_BEFORE=$(r4_bool r4_module_loaded)
+	printf '%s\n' "${V6_BEGIN_CRUMB}"
+	printf 'V6_ARTIFACTS_AT path="%s"\n' "${ARTIFACT_DIR}"
+	r4_log TEST_BEGIN "test=${TEST_NAME}" "artifact_dir=\"${ARTIFACT_DIR}\""
+	r4_state "${ARTIFACT_DIR}/state-before.txt"
+	r4_save_dmesg "${ARTIFACT_DIR}/dmesg-before.txt"
+}
+
+r4_v6_fail_exit() {
+	FAILED_STAGE=${1:?stage required}; shift
+	local crumb=${1:?breadcrumb required}; shift
+	local msg=${*:-}
+	[[ -n ${msg} ]] && printf '%s error="%s"\n' "${crumb}" "$(r4_quote_msg "${msg}")" || printf '%s\n' "${crumb}"
+	exit 1
+}
+
+r4_v6_finish() {
+	local rc=$?
+	r4_state "${ARTIFACT_DIR}/state-after.txt"
+	r4_save_dmesg "${ARTIFACT_DIR}/dmesg-after.txt"
+	r4_filter_dmesg "${ARTIFACT_DIR}/dmesg-after.txt" "${ARTIFACT_DIR}/dmesg-filtered.txt"
+	local module_loaded_after module_unloaded_after_cleanup ktx entd loop dmesg_danger
+	module_loaded_after=$(r4_bool r4_module_loaded)
+	r4_cleanup "${ARTIFACT_DIR}"
+	module_unloaded_after_cleanup=$([[ $(r4_bool r4_module_loaded) == 0 ]] && printf 1 || printf 0)
+	ktx=$(r4_bool r4_ktxnmgrd_alive); entd=$(r4_bool r4_entd_alive); loop=$(r4_bool r4_any_reiser4_loop_exists)
+	if ! r4_has_dmesg_danger "${ARTIFACT_DIR}/dmesg-after.txt"; then dmesg_danger=1; printf 'V6_DMESG_DANGER\n'; else dmesg_danger=0; fi
+	if r4_module_loaded; then printf 'V6_RMMOD_FAIL module_ref_stuck=%s\n' "$(r4_module_refcount)"; fi
+	if r4_ktxnmgrd_alive; then printf 'V6_KTXNMGRD_STUCK\n'; fi
+	if r4_entd_alive; then printf 'V6_ENTD_STUCK\n'; fi
+	if r4_any_reiser4_loop_exists; then printf 'V6_LOOP_STUCK\n'; fi
+	if r4_deleted_reiser4_loop_exists; then printf 'V6_LOOP_STUCK_DELETED_IMAGE\n'; fi
+	if [[ ${SILENT_CORRUPTION:-0} == 1 ]]; then printf 'V6_SILENT_CORRUPTION_DETECTED\n'; fi
+	r4_write_summary "${ARTIFACT_DIR}" \
+		"TEST=${TEST_NAME}" "RESULT=${RESULT}" "FAILED_STAGE=${FAILED_STAGE}" \
+		"GIT_HEAD=$(r4_git_head)" "KERNEL=$(uname -a)" \
+		"REISER4PROGS_VERSION=$(r4_reiser4progs_version)" \
+		"MODULE_LOADED_BEFORE=${MODULE_LOADED_BEFORE}" "MODULE_LOADED_AFTER=${module_loaded_after}" \
+		"MODULE_UNLOADED_AFTER_CLEANUP=${module_unloaded_after_cleanup}" \
+		"KTXNMGRD_ALIVE_AFTER=${ktx}" "ENTD_ALIVE_AFTER=${entd}" \
+		"LOOP_STUCK_AFTER=${loop}" "DMESG_DANGER=${dmesg_danger}" \
+		"SILENT_CORRUPTION=${SILENT_CORRUPTION:-0}" "ARTIFACT_DIR=${ARTIFACT_DIR}" ${R4_SUMMARY_EXTRA:-}
+	printf 'V6_ARTIFACTS_AT path="%s"\n' "${ARTIFACT_DIR}"
+	r4_log TEST_END "test=${TEST_NAME}" "result=${RESULT}" "failed_stage=${FAILED_STAGE}"
+	exit "${rc}"
+}
+
+r4_v6_require_root_and_tools() {
+	if [[ ${EUID} -ne 0 ]]; then r4_v6_fail_exit preflight "${1:-V6_PREFLIGHT_FAIL}" root_required=1; fi
+	[[ -e ./reiser4.ko ]] || r4_v6_fail_exit preflight "${1:-V6_PREFLIGHT_FAIL}" missing_reiser4_ko=1
+	command -v mkfs.reiser4 >/dev/null 2>&1 || r4_v6_fail_exit preflight "${1:-V6_PREFLIGHT_FAIL}" missing_mkfs_reiser4=1
+}
+
+r4_v6_mount_image() {
+	local image=${1:?image} mnt=${2:?mnt} size=${3:-256M}
+	rm -f "${image}"; mkdir -p "${mnt}"
+	truncate -s "${size}" "${image}" || return 1
+	mkfs.reiser4 -f "${image}" >"${ARTIFACT_DIR}/mkfs-$(basename "${image}").log" 2>&1 || return 2
+	if ! r4_module_loaded; then insmod ./reiser4.ko || return 3; fi
+	mount -t reiser4 -o loop "${image}" "${mnt}" || return 4
+}
+
+r4_v6_unmount_image() {
+	local image=${1:?image} mnt=${2:?mnt}
+	sync || true
+	umount "${mnt}" || return 1
+	while IFS= read -r dev; do [[ -n ${dev} ]] && losetup -d "${dev}" >/dev/null 2>&1 || true; done < <(losetup -j "${image}" 2>/dev/null | cut -d: -f1 || true)
+}
