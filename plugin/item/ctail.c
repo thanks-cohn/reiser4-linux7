@@ -1560,7 +1560,28 @@ static int assign_conversion_mode(flush_pos_t * pos, ctail_convert_mode_t *mode)
 			assert("edward-266",
 			       jnode_page(pos->child)->mapping != NULL);
 
-			inode = jnode_page(pos->child)->mapping->host;
+			if (!pos) {
+printk(KERN_ERR "BUMRUSH26_ASSIGN pos NULL\\n");
+return -EINVAL;
+}
+
+if (!pos->child) {
+printk(KERN_ERR "BUMRUSH26_ASSIGN child NULL\\n");
+return -EINVAL;
+}
+
+if (!jnode_page(pos->child)) {
+printk(KERN_ERR "BUMRUSH26_ASSIGN page NULL child=%p\\n", pos->child);
+return -EINVAL;
+}
+
+if (!jnode_page(pos->child)->mapping) {
+printk(KERN_ERR "BUMRUSH26_ASSIGN mapping NULL child=%p page=%p\\n",
+pos->child, jnode_page(pos->child));
+return -EINVAL;
+}
+
+inode = jnode_page(pos->child)->mapping->host;
 
 			assert("edward-267", inode != NULL);
 			/*
