@@ -1706,9 +1706,7 @@ static int do_convert_ctail(flush_pos_t * pos, ctail_convert_mode_t mode)
 int convert_ctail(flush_pos_t * pos)
 {
 printk(KERN_ERR
-"BUMRUSH26: convert_ctail temporarily bypassed for Linux 6.8 stabilization\n");
-
-return 0;
+"BUMRUSH26: convert_ctail ACTIVE path entered\n");
 
 /* TEMPORARY DISABLE DURING PORT */
 	int ret;

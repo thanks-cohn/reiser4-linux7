@@ -131,3 +131,19 @@ Current frontier:
 
 This branch is not production-ready. Some paths are temporary stubs to push the build frontier forward. Do not use on valuable data.
 
+
+## Revival Milestone — 2026-05-29
+
+At approximately **4:44 AM Mexico City time**, this repository reached a meaningful Reiser4 revival milestone.
+
+The project now builds `reiser4.ko` as an out-of-tree kernel module on Ubuntu 24.04 / Linux 6.8 and has reached real runtime filesystem behavior: module loading, loopback formatting, mounting, regular file creation, write/read operations, transaction paths, and flush paths.
+
+The current frontier has narrowed to concrete runtime failures:
+
+- `assign_conversion_mode()` / `convert_ctail()` NULL dereference.
+- Directory creation failure.
+- Inode `65536` eviction / teardown failure.
+- Clean unmount and module unload stability.
+
+See `docs/status/REISER4_REVIVAL_2026_05_29.md`.
+

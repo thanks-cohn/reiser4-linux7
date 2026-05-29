@@ -4,7 +4,7 @@
 
 MODULE := reiser4
 
-obj-$(CONFIG_REISER4_FS) := $(MODULE).o
+obj-m := $(MODULE).o
 
 $(MODULE)-objs += \
 			debug.o \
