@@ -100,3 +100,29 @@ V6 candidate releases require:
 - Published safe/unsafe workload boundaries.
 - Published failure-report template and recovery instructions.
 - No binary module without matching source, build metadata, and proof logs.
+
+## Large Filename / True Name Requirements
+
+V6 cannot claim production value while long-name behavior is unknown, unsafe, or
+only described as aspiration. Reiser4-NX must preserve the long-name dream by
+proving the safe boundaries first.
+
+Required evidence before any production-value claim:
+
+- Normal filename boundary tests around common Linux component limits, including
+  safe behavior at and beyond 255-byte components.
+- Current observed Reiser4-NX filename limits from privileged loopback probes,
+  including remount verification and dmesg scans.
+- Honest native large-name feasibility research covering kernel, VFS, dentry,
+  `qstr`, userspace, backup, recovery, and tooling constraints.
+- No native large POSIX name mode unless it is explicitly experimental,
+  default-off, mount-option gated, and protected by tests.
+- True-name metadata design for a POSIX-visible safe name plus a durable
+  Reiser4-NX true name of at least 4000 characters.
+- Export/import manifest strategy so movement to ext4, XFS, Btrfs, ZFS, or other
+  filesystems creates safe shortened names while preserving full true names in a
+  manifest.
+- Backup, restore, remount, fsck/recovery, and damaged-image drills proving true
+  names are preserved or failures are reported clearly.
+- No production-value claim if long-name behavior is unknown, untested,
+  unrecoverable, or capable of creating false confidence.
