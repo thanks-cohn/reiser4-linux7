@@ -1,41 +1,28 @@
 # Reiser4-Linux7 Test Matrix
 
-Use this table for every meaningful proof run. Unknown values must remain explicit; do not infer them after the fact.
+Use this matrix to track proof runs. Do not infer readiness from partial results.
 
-| Date | Git commit | Kernel version | Compiler | reiser4progs version | Storage | Loopback result | Real disk result | mkdir | rename | delete | sync | unmount | remount | rmmod | stress | fsck | Large filename probe | Max observed successful component length | Long-name dmesg status | True-name support status | Log/artifact |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-05-29 | TBD | Host lacks matching build headers in this workspace | TBD | mkfs.reiser4 not found in this workspace | Loopback | Blocked before proof | Not run | Blocked | Blocked | Blocked | Blocked | Blocked | Blocked | Blocked | Blocked | Blocked | Blocked: `mkfs.reiser4` not found | Unknown | Not run; probe blocked before mount | Not implemented; design only | `artifacts/large-filename-probe-20260529T133958Z/` |
+| Suite | Test | Purpose | Pass criterion | Artifact | Current expected result |
+| --- | --- | --- | --- | --- | --- |
+| V3 personal smoke | `smoke_build_module.sh` | Build module against current kernel headers | clean Kbuild invocation creates reiser4.ko | `artifacts/smoke_build_module-<timestamp>/summary.txt` | Likely expected to pass on Ubuntu 24.04 LTS / Linux 6.8 with matching headers |
+| V3 personal smoke | `smoke_module_lifecycle.sh` | Pure insmod, procfs registration, rmmod | module loads, /proc/filesystems lists reiser4, module unloads | `artifacts/smoke_module_lifecycle-<timestamp>/summary.txt` | Expected to pass only from clean boot or clean module state |
+| V3 personal smoke | `smoke_mkfs_image.sh` | Fresh loopback mkfs.reiser4 image | mkfs.reiser4 exits 0 | `artifacts/smoke_mkfs_image-<timestamp>/summary.txt` | Expected to pass |
+| V3 personal smoke | `smoke_mount_root_stat_unmount.sh` | Mount root, stat root, unmount, rmmod | mount/stat/unmount/rmmod all pass | `artifacts/smoke_mount_root_stat_unmount-<timestamp>/summary.txt` | Expected to pass from clean state |
+| V3 personal smoke | `smoke_regular_file_create.sh` | Create a normal root-level file | file create/stat succeeds | `artifacts/smoke_regular_file_create-<timestamp>/summary.txt` | May pass |
+| V3 personal smoke | `smoke_regular_file_write_read.sh` | Write known bytes and read exact bytes | sha256 before/after matches | `artifacts/smoke_regular_file_write_read-<timestamp>/summary.txt` | May pass |
+| V3 personal smoke | `smoke_regular_file_remount_verify.sh` | Verify file content after remount | hash matches after remount | `artifacts/smoke_regular_file_remount_verify-<timestamp>/summary.txt` | May pass |
+| V3 personal smoke | `smoke_rename_file.sh` | Rename file and verify paths | old path gone, new path readable | `artifacts/smoke_rename_file-<timestamp>/summary.txt` | May pass |
+| V3 personal smoke | `smoke_delete_file.sh` | Delete file and verify after remount | file remains gone | `artifacts/smoke_delete_file-<timestamp>/summary.txt` | May pass |
+| V3 personal smoke | `smoke_mkdir_basic.sh` | Create one directory | mkdir succeeds | `artifacts/smoke_mkdir_basic-<timestamp>/summary.txt` | Currently expected to fail with EPERM until fixed |
+| V3 personal smoke | `smoke_nested_directories.sh` | Nested a/b/c/d/e plus file remount verify | nested directories and file persist | `artifacts/smoke_nested_directories-<timestamp>/summary.txt` | Blocked until mkdir passes |
+| V3 personal smoke | `smoke_directory_many_entries_small.sh` | 100 files in one directory | count/sample hashes verify after remount | `artifacts/smoke_directory_many_entries_small-<timestamp>/summary.txt` | Blocked until mkdir passes |
+| V3 personal smoke | `smoke_sync_pressure_small.sh` | 100 small write/sync operations | no corruption or dmesg danger | `artifacts/smoke_sync_pressure_small-<timestamp>/summary.txt` | Blocked until mkdir and file paths are clean |
+| V3 personal smoke | `smoke_repeated_mount_unmount_10.sh` | Mount/unmount same image ten times | all cycles clean | `artifacts/smoke_repeated_mount_unmount_10-<timestamp>/summary.txt` | Expected only from clean state; exposes teardown issues |
+| V3 personal smoke | `smoke_module_unload_after_filesystem_use.sh` | Unload after real filesystem use | rmmod succeeds; no ktxnmgrd/entd | `artifacts/smoke_module_unload_after_filesystem_use-<timestamp>/summary.txt` | May expose stuck module/ktxnmgrd |
+| V3 personal smoke | `smoke_failed_operation_teardown.sh` | Expected failed op then cleanup | failure does not poison module/loop/thread cleanup | `artifacts/smoke_failed_operation_teardown-<timestamp>/summary.txt` | Failed mkdir may expose stuck module/ktxnmgrd |
+| V3 personal smoke | `smoke_dmesg_cleanliness.sh` | Scan dmesg for danger terms | no BUG/Oops/panic/WARNING/etc. | `artifacts/smoke_dmesg_cleanliness-<timestamp>/summary.txt` | Not clean until all required tests run without danger |
+| V3 personal smoke | `smoke_fsck_after_clean_unmount.sh` | fsck.reiser4 after clean unmount | fsck clean/acceptable exit | `artifacts/smoke_fsck_after_clean_unmount-<timestamp>/summary.txt` | Not READY_TO_TRY until pass |
+| V3 personal smoke | `smoke_v3_short_stress.sh` | Short V3 workload: nested dirs, 500 files, rename/delete, remount verify | operation counts and remount verification pass | `artifacts/smoke_v3_short_stress-<timestamp>/summary.txt` | Blocked until mkdir/teardown are clean |
+| V3 personal smoke | `smoke_v3_repeat_from_clean_boot.sh` | Post-reboot repeat of V3 validation | boot recorded, repeat stress passes, final clean state | `artifacts/smoke_v3_repeat_from_clean_boot-<timestamp>/summary.txt` | Final gate; V3 personal status not READY_TO_TRY until pass |
 
-## Required Fields
-
-- **Kernel version:** exact `uname -a` output, not only major/minor.
-- **Compiler:** exact first line of `gcc --version` or the compiler actually used by Kbuild.
-- **reiser4progs version:** exact `mkfs.reiser4` and `fsck.reiser4` versions if available.
-- **Loopback result:** pass/fail/blocked plus gate script name.
-- **Real disk result:** pass/fail/not-run and device class; never hide destructive-device assumptions.
-- **Operation columns:** pass/fail/blocked/not-run for `mkdir`, `rename`, `delete`, `sync`, `unmount`, `remount`, `rmmod`, `stress`, and `fsck`.
-- **Large filename probe:** pass/fail/blocked/not-run plus the `tests/large_filename_probe.sh` artifact path when available.
-- **Max observed successful component length:** exact maximum byte length observed by the large filename probe; use `Unknown` unless the probe actually ran.
-- **Long-name dmesg status:** clean/dangerous-pattern-detected/blocked/not-run, based on the probe dmesg scan.
-- **True-name support status:** not-implemented/design-only/prototype/pass/fail; do not claim true-name support until export/import/recovery evidence exists.
-- **Log/artifact:** path under `artifacts/` whenever the run generated logs.
-
-## Long-Name Evidence Requirements
-
-Long-name rows must never infer support from doctrine or design documents. A valid
-entry needs a `tests/large_filename_probe.sh` artifact containing attempted
-component lengths, success/failure for each length, remount verification for each
-successful name, and dmesg scan status. True-name support remains
-`Not implemented` until manifest tooling and recovery tests exist.
-
-## Smoke Suite Rows
-
-| Smoke test | Scope | Required clean preconditions | PASS breadcrumb(s) | FAIL breadcrumb(s) | Artifact pattern | Current expected result |
-| --- | --- | --- | --- | --- | --- | --- |
-| Build module | Kbuild clean/modules and `reiser4.ko` artifact health. | Matching `/lib/modules/$(uname -r)/build` headers. | `SMOKE_BUILD_PASS` | `SMOKE_BUILD_FAIL stage=<stage>` | `artifacts/smoke_build_module-<timestamp>/` | Should pass on a host with matching kernel headers. |
-| Module lifecycle | `insmod`, `lsmod`, `/proc/filesystems`, `rmmod`; no mount. | `reiser4` not preloaded/stuck. | `SMOKE_MODULE_INSMOD_PASS`, `SMOKE_MODULE_PROCFS_PASS`, `SMOKE_MODULE_RMMOD_PASS` | `SMOKE_PREFLIGHT_FAIL module_preloaded=1`, `SMOKE_INSMOD_FAIL`, `SMOKE_RMMOD_FAIL` | `artifacts/smoke_module_lifecycle-<timestamp>/` | Should pass only on a clean boot/clean module state. |
-| mkfs mount unmount | `mkfs.reiser4`, loop mount, root stat, unmount, rmmod; no mutation. | Clean module state, `mkfs.reiser4` in `PATH`, root/sudo. | `SMOKE_MKFS_PASS`, `SMOKE_MOUNT_PASS`, `SMOKE_ROOT_STAT_PASS`, `SMOKE_UNMOUNT_PASS`, `SMOKE_RMMOD_PASS` | `SMOKE_MKFS_FAIL`, `SMOKE_MOUNT_FAIL`, `SMOKE_ROOT_STAT_FAIL`, `SMOKE_UNMOUNT_FAIL`, `SMOKE_RMMOD_FAIL` | `artifacts/smoke_mkfs_mount_unmount-<timestamp>/` | mkfs/mount/root stat likely pass. |
-| Regular file rw | Root-level regular file create/write/read/sync/remount verify; no mkdir. | Build, lifecycle, and mount/unmount pass. | `SMOKE_FILE_CREATE_PASS`, `SMOKE_FILE_WRITE_PASS`, `SMOKE_FILE_READ_PASS`, `SMOKE_FILE_REMOUNT_VERIFY_PASS` | `SMOKE_FILE_CREATE_FAIL`, `SMOKE_FILE_WRITE_FAIL`, `SMOKE_FILE_READ_FAIL`, remount verify failure | `artifacts/smoke_regular_file_rw-<timestamp>/` | May pass depending current code. |
-| mkdir only | Isolated mkdir microscope. | Build, lifecycle, and mount pass. | `SMOKE_MKDIR_PASS` | `SMOKE_MKDIR_FAIL error="..."` | `artifacts/smoke_mkdir_only-<timestamp>/` | Currently expected to fail with `EPERM`. |
-| Teardown after failure | Trigger known mkdir failure and verify cleanup resilience. | Clean module state and reproducible mkdir failure. | `SMOKE_EXPECTED_MKDIR_FAIL`, `SMOKE_TEARDOWN_AFTER_FAIL_PASS` | `SMOKE_TEARDOWN_AFTER_FAIL_FAIL module_stuck=1 ktxnmgrd_alive=1 loop_deleted=1` or equivalent flags | `artifacts/smoke_teardown_after_failure-<timestamp>/` | Currently expected to expose stuck module/ktxnmgrd risk. |
-| Full V1 smoke | End-to-end staged V1 path with mkdir and teardown breadcrumbs. | All foundational tests pass and mkdir/teardown are clean. | `SMOKE_MKFS_PASS` through `SMOKE_VERIFY_AFTER_REMOUNT_PASS` and `SMOKE_RMMOD_PASS` | Stage-specific `SMOKE_*_FAIL`, especially `SMOKE_MKDIR_FAIL` and teardown failures | `artifacts/smoke_reiser4_v1-<timestamp>/` | Not passed until mkdir and teardown are clean. |
+`V3_PERSONAL_SMOKE_STATUS=READY_TO_TRY` is valid only when the suite summary reports all required V3 personal smoke tests passed with no stuck module, no stuck `ktxnmgrd`/`entd`, no stuck loop device, and no dmesg danger.
