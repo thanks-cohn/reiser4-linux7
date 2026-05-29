@@ -1546,7 +1546,24 @@ static void post_convert_ctail(flush_pos_t * pos,
 
 static int assign_conversion_mode(flush_pos_t * pos, ctail_convert_mode_t *mode)
 {
+	struct address_space *child_mapping;
+	struct page *child_page;
 	int ret = 0;
+
+	if (pos == NULL) {
+		printk(KERN_ERR "BUMRUSH26_ASSIGN pos NULL\n");
+		return RETERR(-EINVAL);
+	}
+
+	if (mode == NULL) {
+		printk(KERN_ERR "BUMRUSH26_ASSIGN mode NULL pos=%p\n", pos);
+		return RETERR(-EINVAL);
+	}
+
+	if (pos->sq == NULL) {
+		printk(KERN_ERR "BUMRUSH26_ASSIGN convert state NULL pos=%p\n", pos);
+		return RETERR(-EINVAL);
+	}
 
 	*mode = CTAIL_INVAL_CONVERT_MODE;
 
@@ -1555,33 +1572,27 @@ static int assign_conversion_mode(flush_pos_t * pos, ctail_convert_mode_t *mode)
 			struct inode *inode;
 			gfp_t old_mask = get_current_context()->gfp_mask;
 
+			child_page = pos->child ? jnode_page(pos->child) : NULL;
+			child_mapping = child_page ? child_page->mapping : NULL;
+			if (pos->child == NULL || child_page == NULL ||
+			    child_mapping == NULL || child_mapping->host == NULL) {
+				printk(KERN_ERR
+			       "BUMRUSH26_ASSIGN invalid child state pos=%p child=%p "
+			       "page=%p mapping=%p host=%p\n",
+			       pos, pos->child, child_page, child_mapping,
+			       child_mapping ? child_mapping->host : NULL);
+				if (pos->child != NULL) {
+					jput(pos->child);
+					pos->child = NULL;
+				}
+				return RETERR(-EINVAL);
+			}
+
 			assert("edward-264", pos->child != NULL);
-			assert("edward-265", jnode_page(pos->child) != NULL);
-			assert("edward-266",
-			       jnode_page(pos->child)->mapping != NULL);
+			assert("edward-265", child_page != NULL);
+			assert("edward-266", child_mapping != NULL);
 
-			if (!pos) {
-printk(KERN_ERR "BUMRUSH26_ASSIGN pos NULL\\n");
-return -EINVAL;
-}
-
-if (!pos->child) {
-printk(KERN_ERR "BUMRUSH26_ASSIGN child NULL\\n");
-return -EINVAL;
-}
-
-if (!jnode_page(pos->child)) {
-printk(KERN_ERR "BUMRUSH26_ASSIGN page NULL child=%p\\n", pos->child);
-return -EINVAL;
-}
-
-if (!jnode_page(pos->child)->mapping) {
-printk(KERN_ERR "BUMRUSH26_ASSIGN mapping NULL child=%p page=%p\\n",
-pos->child, jnode_page(pos->child));
-return -EINVAL;
-}
-
-inode = jnode_page(pos->child)->mapping->host;
+			inode = child_mapping->host;
 
 			assert("edward-267", inode != NULL);
 			/*
