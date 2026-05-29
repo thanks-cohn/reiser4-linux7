@@ -134,6 +134,8 @@ Passing this list once is not enough for production trust. These tests should be
 
 64. Verify absurdly long filenames fail safely at the correct boundary.
 
+    Reiser4-NX must eventually test the historical large filename dream explicitly, including 255, 256, 512, 1024, 2048, 3976, 4032, and 4096 byte component probes, and must either support them safely or fail safely with documented behavior.
+
 65. Verify absurdly long paths fail safely at the correct boundary.
 
 66. Verify Unicode filenames, spaces, newlines, shell-hostile names, and mixed encodings do not corrupt directory listings.
