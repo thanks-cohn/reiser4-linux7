@@ -595,8 +595,13 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 	if (par_dplug->is_name_acceptable &&
 	    !par_dplug->is_name_acceptable(parent,
 					   dentry->d_name.name,
-					   (int)dentry->d_name.len))
+					   (int)dentry->d_name.len)) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL unacceptable_name parent=%lu name=%pd result=%d\n",
+			       parent->i_ino, dentry, -ENAMETOOLONG);
 		return RETERR(-ENAMETOOLONG);
+	}
 
 	result = 0;
 	obj_fplug = file_plugin_by_id((int)data->id);
@@ -606,12 +611,21 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 		       data->id, obj_fplug,
 		       obj_fplug && obj_fplug->h.label ? obj_fplug->h.label : "<none>");
 	if (obj_fplug == NULL) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL missing file plugin requested_id=%u result=%d\n",
+			       data->id, -ENOENT);
 		warning("nikita-430", "Cannot find plugin %i", data->id);
 		return RETERR(-ENOENT);
 	}
 	object = new_inode(parent->i_sb);
-	if (object == NULL)
+	if (object == NULL) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL new_inode parent=%lu result=%d\n",
+			       parent->i_ino, -ENOMEM);
 		return RETERR(-ENOMEM);
+	}
 	/* new_inode() initializes i_ino to "arbitrary" value. Reset it to 0,
 	 * to simplify error handling: if some error occurs before i_ino is
 	 * initialized with oid, i_ino should already be set to some
@@ -629,6 +643,10 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 
 	result = obj_fplug->set_plug_in_inode(object, parent, data);
 	if (result) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL set_plug_in_inode parent=%lu object=%lu result=%d\n",
+			       parent->i_ino, object->i_ino, result);
 		warning("nikita-431", "Cannot install plugin %i on %llx",
 			data->id, (unsigned long long)get_inode_oid(object));
 		return result;
@@ -659,6 +677,10 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 	if (result == 0)
 		result = finish_pset(object);
 	if (result != 0) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL adjust_or_finish parent=%lu object=%lu result=%d\n",
+			       parent->i_ino, object->i_ino, result);
 		warning("nikita-432", "Cannot inherit from %llx to %llx",
 			(unsigned long long)get_inode_oid(parent),
 			(unsigned long long)get_inode_oid(object));
@@ -699,6 +721,11 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 		       "BUMRUSH26_MKDIR_ESTIMATE parent=%lu object=%lu create_reserve=%llu\n",
 		       parent->i_ino, object->i_ino, (unsigned long long)reserve);
 	if (reiser4_grab_space(reserve, BA_CAN_COMMIT)) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL grab_space parent=%lu object=%lu reserve=%llu result=%d\n",
+			       parent->i_ino, object->i_ino,
+			       (unsigned long long)reserve, -ENOSPC);
 		return RETERR(-ENOSPC);
 	}
 
@@ -724,14 +751,33 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 	result = obj_fplug->create_object(object, parent, data);
 	if (result != 0) {
 		reiser4_inode_clr_flag(object, REISER4_IMMUTABLE);
+		if (trace_mkdir) {
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL create_object parent=%lu object=%lu result=%d\n",
+			       parent->i_ino, object->i_ino, result);
+			if (result == -EPERM)
+				printk(KERN_ERR
+				       "BUMRUSH26_MKDIR_EPERM create_object parent=%lu object=%lu\n",
+				       parent->i_ino, object->i_ino);
+		}
 		if (result != -ENAMETOOLONG && result != -ENOMEM)
 			warning("nikita-2219",
 				"Failed to create sd for %llu",
 				(unsigned long long)get_inode_oid(object));
 		return result;
 	}
-	if (obj_dplug != NULL)
+	if (obj_dplug != NULL) {
 		result = obj_dplug->init(object, parent, data);
+		if (trace_mkdir && result != 0) {
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL dir_init parent=%lu object=%lu result=%d\n",
+			       parent->i_ino, object->i_ino, result);
+			if (result == -EPERM)
+				printk(KERN_ERR
+				       "BUMRUSH26_MKDIR_EPERM dir_init parent=%lu object=%lu\n",
+				       parent->i_ino, object->i_ino);
+		}
+	}
 	if (result == 0) {
 		assert("nikita-434", !reiser4_inode_get_flag(object,
 							     REISER4_NO_SD));
@@ -739,6 +785,15 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 		insert_inode_hash(object);
 		/* create entry */
 		result = par_dplug->add_entry(parent, dentry, data, &entry);
+		if (trace_mkdir && result != 0) {
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL add_entry parent=%lu object=%lu name=%pd result=%d\n",
+			       parent->i_ino, object->i_ino, dentry, result);
+			if (result == -EPERM)
+				printk(KERN_ERR
+				       "BUMRUSH26_MKDIR_EPERM add_entry parent=%lu object=%lu name=%pd\n",
+				       parent->i_ino, object->i_ino, dentry);
+		}
 		if (result == 0) {
 			/* If O_CREAT is set and the file did not previously
 			   exist, upon successful completion, open() shall
@@ -792,8 +847,13 @@ create_vfs_object(struct inode *parent,
 	struct inode *child;
 
 	ctx = reiser4_init_context(parent->i_sb);
-	if (IS_ERR(ctx))
+	if (IS_ERR(ctx)) {
+		if (data->id == DIRECTORY_FILE_PLUGIN_ID)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_FAIL init_context parent=%lu name=%pd result=%ld\n",
+			       parent ? parent->i_ino : 0, dentry, PTR_ERR(ctx));
 		return PTR_ERR(ctx);
+	}
 	context_set_commit_async(ctx);
 
 	data->parent = parent;

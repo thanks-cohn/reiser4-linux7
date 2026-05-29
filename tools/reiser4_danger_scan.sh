@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ROOT=${1:-.}
 
-PATTERN='BUMRUSH|TEMPORARY|bypass|stub|TODO|FIXME|return[[:space:]]+0|EPERM|EINVAL|clear_inode|BUG_ON|panic|convert_ctail|shrink|folio'
+PATTERN='BUMRUSH|TEMPORARY|bypass|stub|TODO|FIXME|return[[:space:]]+0|EPERM|EINVAL|clear_inode|BUG_ON|panic|convert_ctail|assign_conversion_mode|shrinker|folio'
 
 if ! command -v rg >/dev/null 2>&1; then
 	echo "reiser4_danger_scan: ripgrep (rg) is required" >&2

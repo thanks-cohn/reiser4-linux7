@@ -3,9 +3,9 @@ set -Eeuo pipefail
 
 # Reiser4 V3 mkdir regression test for Ubuntu 24.04 / Linux 6.8-first work.
 #
-# This script is intentionally strict: mkdir, nested regular file IO, sync,
-# clean unmount, and optional module unload are all treated as stability gates.
-# It writes a self-contained command log plus dmesg snapshots under LOG_DIR.
+# This is a focused regression, not the full V3 proof. It gates mkdir plus
+# nested file IO, rename/delete, remount verification, clean unmount, optional
+# module unload, and a dangerous-kernel-message dmesg scan.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IMG="${IMG:-/tmp/reiser4-v3-mkdir.img}"
@@ -19,7 +19,7 @@ RUN_LOG="$LOG_DIR/run.log"
 DMESG_BEFORE="$LOG_DIR/dmesg.before.log"
 DMESG_AFTER="$LOG_DIR/dmesg.after.log"
 LOOPDEV=""
-RESULT=0
+DMESG_PATTERN='BUG|Oops|panic|null pointer|NULL pointer|WARNING|use-after-free'
 
 mkdir -p "$LOG_DIR"
 exec > >(tee -a "$RUN_LOG") 2>&1
@@ -51,6 +51,24 @@ capture_dmesg() {
 	fi
 }
 
+clear_dmesg_if_permitted() {
+	log "+ sudo dmesg -C"
+	if sudo dmesg -C >/dev/null 2>&1; then
+		log "cleared dmesg for focused regression window"
+	else
+		log "WARNING: unable to clear dmesg; scan will include older kernel messages"
+	fi
+}
+
+scan_dmesg() {
+	local target="$1"
+	if grep -Eiq "$DMESG_PATTERN" "$target"; then
+		log "ERROR: dangerous dmesg text matched pattern: $DMESG_PATTERN"
+		grep -Ein "$DMESG_PATTERN" "$target" | tail -100 || true
+		return 1
+	fi
+}
+
 cleanup() {
 	local status=$?
 	set +e
@@ -76,6 +94,11 @@ cleanup() {
 		fi
 	fi
 	capture_dmesg "$DMESG_AFTER"
+	scan_dmesg "$DMESG_AFTER"
+	local scan_status=$?
+	if [ "$scan_status" -ne 0 ] && [ "$status" -eq 0 ]; then
+		status=$scan_status
+	fi
 	if [ "$KEEP_IMAGE" != "1" ]; then
 		rm -f "$IMG"
 		log "cleanup: removed image $IMG"
@@ -94,6 +117,7 @@ run uname -a
 run id
 require_cmd mkfs.reiser4
 require_cmd losetup
+clear_dmesg_if_permitted
 capture_dmesg "$DMESG_BEFORE"
 
 if ! grep -qw reiser4 /proc/filesystems; then
@@ -126,6 +150,21 @@ run sudo test -f "$MNT/dir1/file.txt"
 log "+ read nested file"
 sudo cat "$MNT/dir1/file.txt"
 
+run sudo mv "$MNT/dir1/file.txt" "$MNT/dir1/file.renamed"
+run sudo test -f "$MNT/dir1/file.renamed"
+run sudo rm "$MNT/dir1/file.renamed"
+run sudo test ! -e "$MNT/dir1/file.renamed"
+log "+ recreate marker for remount verification"
+printf 'remount marker\n' | sudo tee "$MNT/dir1/remount-marker.txt" >/dev/null
+run sync
+
+run sudo umount "$MNT"
+run sudo mount -t reiser4 "$LOOPDEV" "$MNT"
+run sudo test -d "$MNT/dir1"
+run sudo test -f "$MNT/dir1/remount-marker.txt"
+log "+ read remount marker"
+sudo cat "$MNT/dir1/remount-marker.txt"
+run sync
 run sudo umount "$MNT"
 LOOPDEV_TO_DETACH="$LOOPDEV"
 run sudo losetup -d "$LOOPDEV_TO_DETACH"
@@ -135,4 +174,4 @@ if [ "$UNLOAD_MODULE" = "1" ]; then
 	run sudo rmmod reiser4
 fi
 
-log "PASS: mkdir, nested file IO, sync, unmount, and any requested unload gate completed"
+log "PASS: mkdir, rename, delete, remount verification, unmount, and any requested unload gate completed"

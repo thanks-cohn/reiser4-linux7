@@ -1,0 +1,11 @@
+# Reiser4-Linux7 Failure Registry
+
+This registry tracks known failures until a gate script proves them fixed. Log paths should point at files under `artifacts/` when available.
+
+| Failure | Symptom | Trigger command | Suspected function | Current status | Next step | Log/artifact path |
+| --- | --- | --- | --- | --- | --- | --- |
+| mkdir EPERM | `mkdir` on a mounted Reiser4 image returns `EPERM` / operation not permitted. | `sudo mkdir <mountpoint>/dir1` or `scripts/reiser4-v3-mkdir-regression.sh` | `plugin/inode_ops.c::reiser4_mkdir_common()` and `do_create_vfs_child()` plugin/estimate/creation path | Open blocker; instrumentation added, but exact returning branch must be confirmed on a kernel-capable host. | Run the V3 mkdir regression, inspect `BUMRUSH26_MKDIR_*` tags, then patch only the confirmed branch. | TBD |
+| assign_conversion_mode / convert_ctail NULL dereference | Kernel NULL dereference in ctail conversion path. | Workload that reaches tail conversion / ctail conversion. | `plugin/item/ctail.c::assign_conversion_mode()` / `convert_ctail()` | Open blocker outside the current safe V3 path. | Preserve crash log, identify required preconditions, and add a focused regression before patching. | TBD |
+| inode 65536 eviction | Eviction leaves pages attached; `clear_inode()` is unsafe and currently guarded by temporary return. | Unmount after basic loopback IO. | `super_ops.c::reiser4_evict_inode()` | Open teardown blocker; detailed eviction instrumentation is present. | Use folio/page state logs to fix the remaining page/private reference before allowing `clear_inode()`. | `docs/progress/report/2026-05-29-eviction-status.md` |
+| clean unmount failure | Unmount fails, hangs, warns, or leaves dirty/in-use state. | `sudo umount <mountpoint>` after smoke or mkdir regression. | `super_ops.c::reiser4_evict_inode()`, writeback, jnode/page invalidation, daemon shutdown | Open blocker. | Run strengthened V3 mkdir and V3 proof gates; compare pre/post `dmesg` and mount state. | TBD |
+| module unload refs / entd / ktxnmgrd | `rmmod reiser4` fails due to references or lingering kernel threads. | `sudo rmmod reiser4` after unmount. | `reiser4_put_super()`, `entd`, `ktxnmgrd`, reference teardown | Open blocker. | Capture `lsmod`, thread state, mount state, and `dmesg`; fix leaked refs before V3. | TBD |
