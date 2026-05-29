@@ -1,101 +1,102 @@
 # V6 Production-Value Plan
 
-This document does **not** claim V6. It defines the structure required before a V6 production-value candidate can be considered.
+This document does **not** claim V6. It defines the work required before a production-value candidate can be considered.
 
-## Test Matrix
+## Supported Kernel Matrix
 
-Track every run with kernel version, compiler version, architecture, reiser4progs version, module commit, mount options, and storage backend.
+A supported kernel entry must include:
 
-Minimum matrix dimensions:
+- Exact `uname -a`.
+- Kernel config source or package identifier.
+- Architecture.
+- Compiler and binutils versions.
+- Reiser4 module commit.
+- Passing V1, V2, and V3 gate artifacts.
+- Clean unmount/remount/`rmmod` evidence.
 
-- Kernel versions: known-good, known-bad, and current development targets.
-- Storage backends: loopback, disposable physical block device, virtual disk, and power-loss test device.
-- Workloads: V1 lifecycle, V2 stress, V3 proof, source tree workloads, tar/unpack/delete, git clone/build/delete, large directory churn, and long remount/reboot cycles.
-- Teardown: unmount, remount, `rmmod`, daemon/thread exit, and module reference count checks.
+Unsupported kernels must remain listed with the reason: build failure, load failure, V1 failure, V3 failure, crash, dirty teardown, or unreviewed warning.
 
-## Crash Consistency
+## CI / Build Matrix
 
-Required before V6:
+V6 needs reproducible CI that covers:
 
-- Defined crash points for metadata updates, file writes, rename, unlink, and directory creation.
-- Automated crash/replay harness.
-- Post-crash mount behavior documented.
-- Post-crash `fsck` / repair behavior documented.
-- Expected data-loss boundaries documented.
+- Clean module build against every supported kernel.
+- Warnings-as-actionable build log review.
+- Script shell checks for `scripts/`, `tests/`, and `tools/`.
+- Artifact upload for logs, `dmesg`, environment reports, and failure bundles.
+- Optional destructive-test jobs isolated from normal CI.
+
+## fsck / Recovery Story
+
+V6 requires a documented recovery path:
+
+- Supported `mkfs.reiser4` and `fsck.reiser4` versions.
+- Expected clean-fs `fsck` output after proof scripts.
+- Corrupted-image repair tests.
+- Post-crash mount and fsck behavior.
+- Known unrecoverable states and user-facing instructions.
+
+## Crash Consistency Testing
+
+Required crash-consistency coverage:
+
+- `mkdir`, create, write, rename, unlink, sync, and remount crash points.
+- Forced crash/replay harness for loopback or VM disks.
+- Verification of metadata and file contents after recovery.
+- Explicit documentation of expected data-loss boundaries.
 
 ## Power-Loss Testing
 
-Required before V6:
+Required power-loss coverage:
 
-- Repeatable power-cut test hardware or VM-backed forced power loss.
-- Tests during write, rename, unlink, mkdir, sync, and remount.
-- Evidence of mount, recovery, and integrity after repeated power loss.
+- Repeatable VM hard-poweroff or hardware power-cut harness.
+- Power loss during writeback, metadata update, rename, unlink, mkdir, sync, mount, and unmount.
+- Post-power-loss mount, fsck, and workload validation.
 - Clear list of workloads that remain unsafe after power loss.
-
-## fsck / Recovery
-
-Required before V6:
-
-- Supported reiser4progs version matrix.
-- `fsck` invocation documentation.
-- Clean filesystem sanity run after every proof path where available.
-- Corrupted-image recovery tests.
-- Known unrecoverable states documented.
 
 ## Security Review
 
-Required before V6:
+Required review areas:
 
-- Audit of all user-controlled metadata parsing.
-- Audit of bounds checks, integer overflow, reference counting, lifetime management, and folio/page interactions.
-- Fuzzing plan for disk images and mount-time parsing.
-- Review of all temporary compatibility shims and dangerous stubs.
+- Disk metadata parsing and mount-time trust boundaries.
+- Integer overflow and bounds checking.
+- Reference counting and lifetime rules.
+- Folio/page/private-data ownership.
+- Locking, transaction, and daemon teardown.
+- Fuzzing of disk images and mount/recovery paths.
 
-## Supported Kernels
+## Temporary Stub Removal
 
-A supported kernel must have:
+Before V6, every dangerous marker reported by `tools/reiser4_danger_scan.sh` must be removed or classified. This includes `BUMRUSH`, `TEMPORARY`, bypasses, stubs, `TODO`, `FIXME`, suspicious unconditional `return 0`, `EPERM`, `EINVAL`, `clear_inode`, `BUG_ON`, `panic`, `convert_ctail`, `assign_conversion_mode`, shrinker, and folio compatibility markers.
 
-- Clean build logs.
-- Passing V1, V2, and V3 proof logs.
-- Clean unmount and `rmmod` evidence.
-- No supported-path BUG, Oops, panic, warning explosion, NULL dereference, use-after-free, or stuck daemon threads.
+## Known Safe Workloads
 
-## Unsupported Kernels
+A workload can be called safe only after it has passing artifacts across the supported matrix. Candidate safe-workload categories:
 
-A kernel is unsupported if:
+- Disposable loopback smoke tests.
+- Many-small-file create/read/rename/delete cycles.
+- Source tree unpack/build/delete cycles.
+- Archive extract/delete cycles.
+- Git clone/status/delete cycles.
 
-- The module does not build cleanly.
-- The module cannot load.
-- V1 fails.
-- The proof path triggers kernel BUG, Oops, panic, warning explosion, NULL dereference, or use-after-free.
-- Clean unmount or `rmmod` fails.
+## Known Unsafe Workloads
 
-## Dangerous Stubs
+Unsafe until proven otherwise:
 
-The V6 process must track and burn down all occurrences reported by:
-
-```text
-tools/reiser4_danger_scan.sh
-```
-
-Every remaining `TODO`, `FIXME`, temporary bypass, unconditional success return, `BUG_ON`, panic path, or folio/shrink compatibility workaround must be classified as safe, unsafe, or removed.
+- Valuable data.
+- Unsupported kernels.
+- Unbounded production services.
+- Power-loss scenarios without recovery evidence.
+- Any ctail conversion workload that can reproduce the known NULL-deref path.
+- Any workload that leaves lingering module refs, daemon threads, dirty pages, or unreviewed warnings.
 
 ## Release Discipline
 
-Required before V6:
+V6 candidate releases require:
 
-- Tagged releases only from passing commits.
-- Release notes include exact kernel and reiser4progs versions.
-- Known-good and known-bad kernel list.
-- Known safe and unsafe workloads.
-- Panic/Oops report template.
-- Reproduction log template.
-
-## Artifact / Release Policy
-
-Required before V6:
-
-- Source tags are the primary release artifact.
-- Build artifacts must identify source commit, kernel headers, compiler, and configuration.
-- No binary module should be published without matching source and proof logs.
-- CI logs and proof-script output must be retained with each candidate release.
+- Tagged source release.
+- Exact source commit, kernel matrix, compiler matrix, and reiser4progs matrix.
+- Retained V1/V2/V3/V6 artifacts.
+- Published safe/unsafe workload boundaries.
+- Published failure-report template and recovery instructions.
+- No binary module without matching source, build metadata, and proof logs.

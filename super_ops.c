@@ -231,15 +231,17 @@ static void reiser4_evict_inode(struct inode *inode)
 	}
 
 	printk(KERN_ERR
-	       "REISER4_EVICT ino=%lu state=0x%lx nlink=%u count=%d "
-	       "mapping=%p nrpages=%lu private=%p\n",
+	       "BUMRUSH26_EVICT_ENTER ino=%lu state=0x%lx nlink=%u count=%d "
+	       "mapping=%p nrpages=%lu private=%p dirty=%d writeback=%d "
+	       "folio=%p private_folio=%d mapped=%d refs=%d\n",
 	       inode->i_ino,
 	       inode->i_state,
 	       inode->i_nlink,
 	       atomic_read(&inode->i_count),
 	       inode->i_mapping,
 	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL,
-	       inode->i_private);
+	       inode->i_private,
+	       -1, -1, (void *)NULL, -1, -1, -1);
 
 	ret = filemap_write_and_wait(&inode->i_data);
 	if (ret != 0)
@@ -336,6 +338,14 @@ static void reiser4_evict_inode(struct inode *inode)
 		reiser4_exit_context(ctx);
 		return;
 	}
+
+	printk(KERN_ERR
+	       "BUMRUSH26_EVICT_CLEAR ino=%lu state=0x%lx nlink=%u count=%d "
+	       "mapping=%p nrpages=%lu private=%p\n",
+	       inode->i_ino, inode->i_state, inode->i_nlink,
+	       atomic_read(&inode->i_count), inode->i_mapping,
+	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL,
+	       inode->i_private);
 
 	clear_inode(inode);
 	reiser4_exit_context(ctx);

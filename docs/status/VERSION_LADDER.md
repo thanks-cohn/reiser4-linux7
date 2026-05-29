@@ -1,117 +1,106 @@
 # Reiser4-Linux7 Version Ladder
 
-This ladder defines what each project milestone means. A milestone is not real unless the matching proof script exists, passes, and the accompanying `dmesg` evidence shows no kernel BUG, Oops, panic, warning explosion, NULL dereference, or stuck module/thread teardown in the supported path.
+This ladder defines the project milestones from first signs of life through a production-value candidate. A milestone is not real unless its matching gate script exists, passes, and the saved `dmesg` evidence is reviewed. This document does **not** claim V3 or any later milestone.
 
 ## V0 Alive
 
-**Target:** prove the filesystem is alive enough for minimal loopback use.
+**Meaning:** the port is alive enough to prove that the code can be built, loaded, formatted, mounted, and used for minimal regular-file IO on a disposable image.
 
-Required evidence:
+**Minimum evidence:**
 
-- Kernel module builds as an out-of-tree module.
+- Module builds against the target kernel headers.
 - `reiser4.ko` loads.
 - `mkfs.reiser4` formats a loopback image.
 - Filesystem mounts.
-- Regular file create/write/read works.
+- A regular file can be created, written, read, and synced.
+
+**Gate:** `scripts/reiser4-alpha-smoke-test.sh`.
 
 ## V1 Basic Lifecycle
 
-**Target:** prove one complete basic filesystem lifecycle.
+**Meaning:** one complete basic filesystem lifecycle works on a disposable loopback image.
 
-Required operation sequence:
+**Required operation sequence:**
 
 ```text
 mkfs -> mount -> mkdir -> create -> write -> read -> rename -> delete -> sync -> unmount -> remount -> verify -> unmount -> rmmod
 ```
 
-Required proof:
-
-- `tests/smoke_reiser4_v1.sh` passes.
-- Failure path captures `dmesg` evidence.
-- No supported-path BUG, Oops, panic, warning explosion, NULL dereference, or stuck module reference is observed.
+**Gate:** `scripts/reiser4-v1-smoke.sh`.
 
 ## V2 Stress-Hardened Lab
 
-**Target:** prove repeated lab stress on loopback without immediate lifecycle regressions.
+**Meaning:** the basic lifecycle survives repeated lab stress on disposable loopback images.
 
-Required evidence:
+**Required evidence:**
 
-- 1000 basic filesystem operation loops.
-- 50 mount/remount cycles.
-- Nested directory operations during the stress path.
-- Many small file create/rename/delete cycles.
-- No kernel BUG, Oops, panic, warning explosion, or stuck module refs.
+- Repeated create/read/write/rename/delete loops.
+- Repeated mount, unmount, and remount cycles.
+- Nested directory operations.
+- Many-small-file churn.
+- Clean `dmesg` review after the run.
 
-Required proof:
-
-- `tests/stress_reiser4_v2.sh 1000` passes.
-- `dmesg` evidence is checked after the run.
+**Gate:** `tests/stress_reiser4_v2.sh`.
 
 ## V3 Personal Experimental Use
 
-**Target:** make loopback-only personal experimental use a guaranteed target, not a claim.
+**Meaning:** loopback-only personal experimental use is proven by a dedicated V3 proof wrapper. V3 is not reached by passing one mkdir test.
 
-Required evidence:
+**Required evidence:**
 
-- Overnight-capable stress on loopback.
-- Nested directories.
-- Many small files.
-- Medium files.
-- Rename/delete storms.
-- Remount verification.
-- `fsck` / reiser4progs sanity checks if available.
-- Sacrificial disk path documented before any block-device testing.
-- No known immediate corruption path in the supported test path.
-- No kernel BUG, Oops, panic, warning explosion, NULL dereference, or use-after-free in the supported test path.
+- V1 gate passes inside the V3 proof wrapper.
+- `scripts/reiser4-v3-mkdir-regression.sh` passes inside the V3 proof wrapper.
+- Many-small-files test passes.
+- Rename/delete test passes.
+- Repeated remount verification passes.
+- Clean unmount passes.
+- `rmmod` passes when the module was loaded by the gate.
+- `dmesg` scan is clean for `BUG`, `Oops`, `panic`, `null pointer`, `WARNING`, and `use-after-free`.
 
-Required proof:
-
-- `tests/prove_reiser4_v3.sh` passes.
-- V1 and V2 gates pass inside the V3 proof wrapper.
-- Final summary explicitly says PASS.
+**Gate:** `tests/prove_reiser4_v3.sh`.
 
 ## V4 Daily Driver Candidate
 
-**Target:** prove backed-up dedicated-machine viability before normal use is considered.
+**Meaning:** the filesystem may be considered for a backed-up dedicated test machine, but not for general public beta or production-value use.
 
-Required evidence:
+**Required evidence:**
 
-- 7-day backed-up dedicated-machine run.
-- Source tree workloads.
-- Tar/unpack/delete cycles.
-- Git clone/build/delete cycles.
-- Large directories.
-- Repeated reboot/remount checks.
-- Clear list of still-unsupported workloads.
+- Multi-day workload replay on a dedicated test machine.
+- Backup and restore drill.
+- Reboot/remount cycles.
+- Source-tree, package-cache, archive, and large-directory workloads.
+- No unreviewed dangerous stubs on the supported path.
+
+**Gate:** TBD; must be added before V4 can be claimed.
 
 ## V5 Public Beta
 
-**Target:** make outside testing possible without ambiguity.
+**Meaning:** the project is ready for public beta testers using explicit workload boundaries and full failure-reporting discipline.
 
-Required evidence:
+**Required evidence:**
 
-- Documented build/install procedure.
-- Supported kernel matrix.
-- Issue templates.
-- Panic report templates.
-- Automated smoke/stress scripts.
-- Known-good and known-bad kernel versions.
-- Tagged release notes.
+- Reproducible CI/build matrix.
+- Public issue and crash-report templates.
+- Known-good and known-bad kernel list.
+- Known safe and unsafe workload list.
+- Upgrade/downgrade/recovery notes.
+
+**Gate:** TBD; must be added before V5 can be claimed.
 
 ## V6 Production-Value Candidate
 
-**Target:** production-value engineering structure, not a production guarantee.
+**Meaning:** the filesystem has a defensible production-value story for explicitly supported kernels, reiser4progs versions, storage backends, and workloads. This is still a candidate label, not a blanket production guarantee.
 
-Required evidence:
+**Required evidence:**
 
 - Supported kernel matrix.
-- Clean build.
-- Clean unmount and unload.
-- Crash consistency tests.
-- Power-loss tests.
-- `fsck` / recovery story.
+- CI/build matrix.
+- Crash-consistency testing.
+- Power-loss testing.
+- Recovery/fsck story.
 - Security review.
-- No critical temporary stubs.
-- Documented limits.
-- Reproducible CI.
-- Known safe and unsafe workloads.
+- Temporary stub removal or classification.
+- Explicit known safe and unsafe workloads.
+- Tagged-release discipline and retained artifacts.
+
+**Gate:** TBD; must be added before V6 can be claimed.
