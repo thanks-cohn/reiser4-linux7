@@ -26,3 +26,13 @@ modules.order
 *.mod
 *.ko
 *.img
+
+# kernel build artifacts
+*.o
+*.ko
+*.mod
+*.cmd
+*.d
+Module.symvers
+modules.order
+*.img
