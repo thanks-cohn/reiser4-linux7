@@ -124,6 +124,12 @@ void reiser4_invalidatepage(struct page *page, unsigned int offset, unsigned int
 	assert("nikita-3138", !PageWriteback(page));
 	inode = page->mapping->host;
 
+printk(KERN_ERR
+"BUMRUSH26_INVALIDATE_ENTER ino=%lu page=%p partial=%d\n",
+inode->i_ino,
+page,
+partial_page);
+
 	/*
 	 * ->invalidatepage() should only be called for the unformatted
 	 * jnodes. Destruction of all other types of jnodes is performed
@@ -131,12 +137,24 @@ void reiser4_invalidatepage(struct page *page, unsigned int offset, unsigned int
 	 * during mount) it is simpler to let ->invalidatepage to be called on
 	 * them. Check for this, and do nothing.
 	 */
-	if (reiser4_get_super_fake(inode->i_sb) == inode)
-		return;
-	if (reiser4_get_cc_fake(inode->i_sb) == inode)
-		return;
-	if (reiser4_get_bitmap_fake(inode->i_sb) == inode)
-		return;
+if (reiser4_get_super_fake(inode->i_sb) == inode) {
+printk(KERN_ERR
+"BUMRUSH26_FAKE_INODE super_fake ino=%lu\\n",
+inode->i_ino);
+return;
+}
+if (reiser4_get_cc_fake(inode->i_sb) == inode) {
+printk(KERN_ERR
+"BUMRUSH26_FAKE_INODE cc_fake ino=%lu\\n",
+inode->i_ino);
+return;
+}
+if (reiser4_get_bitmap_fake(inode->i_sb) == inode) {
+printk(KERN_ERR
+"BUMRUSH26_FAKE_INODE bitmap_fake ino=%lu\\n",
+inode->i_ino);
+return;
+}
 	assert("vs-1426", PagePrivate(page));
 	assert("vs-1427",
 	       page->mapping == jnode_get_mapping(jnode_by_page(page)));
@@ -160,6 +178,7 @@ void reiser4_invalidatepage(struct page *page, unsigned int offset, unsigned int
 		reiser4_uncapture_jnode(node);
 		unhash_unformatted_jnode(node);
 		jput(node);
+
 		reiser4_exit_context(ctx);
 		return;
 	}
@@ -250,11 +269,7 @@ jnode_is_unformatted(node));
 	if (!jnode_is_znode(node) && !jnode_is_unformatted(node))
 		return 0;
 
-	printk(KERN_ERR
-"BUMRUSH26_RELEASEPAGE_SUCCESS page=%p\n",
-page);
-
-return 1;
+        return 1;
 }
 
 /*
@@ -310,12 +325,8 @@ int reiser4_releasepage(struct page *page, gfp_t gfp UNUSED_ARG)
 
 		/* we are under memory pressure so release jnode also. */
 		jput(node);
+        return 1;
 
-		printk(KERN_ERR
-"BUMRUSH26_RELEASEPAGE_SUCCESS page=%p\n",
-page);
-
-return 1;
 	} else {
 		spin_unlock(&(node->load));
 		spin_unlock_jnode(node);

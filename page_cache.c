@@ -236,6 +236,15 @@ static void reiser4_invalidate_folio(struct folio *folio,
 static bool reiser4_release_folio(struct folio *folio,
                                   gfp_t gfp)
 {
+    printk(KERN_ERR
+           "BUMRUSH26_RELEASE_FOLIO folio=%p page=%p refs=%d dirty=%d private=%d writeback=%d\n",
+           folio,
+           &folio->page,
+           folio_ref_count(folio),
+           folio_test_dirty(folio),
+           folio_test_private(folio),
+           folio_test_writeback(folio));
+
     return reiser4_releasepage(&folio->page, gfp);
 }
 
