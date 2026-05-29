@@ -36,3 +36,6 @@ modules.order
 Module.symvers
 modules.order
 *.img
+
+# smoke-test runtime artifacts
+artifacts/
