@@ -361,11 +361,27 @@ int reiser4_mkdir_common(struct mnt_idmap *idmap,
 			 struct inode *parent, struct dentry *dentry, umode_t mode)
 {
 	reiser4_object_create_data data;
+	int result;
 
 	memset(&data, 0, sizeof data);
 	data.mode = S_IFDIR | mode;
 	data.id = DIRECTORY_FILE_PLUGIN_ID;
-	return create_vfs_object(parent, dentry, &data);
+	printk(KERN_ERR
+	       "BUMRUSH26_MKDIR_ENTER parent=%lu name=%pd mode=0%o id=%u\n",
+	       parent ? parent->i_ino : 0, dentry, mode, data.id);
+	result = create_vfs_object(parent, dentry, &data);
+	printk(KERN_ERR
+	       "BUMRUSH26_MKDIR_RET parent=%lu name=%pd result=%d\n",
+	       parent ? parent->i_ino : 0, dentry, result);
+	if (result != 0)
+		printk(KERN_ERR
+		       "BUMRUSH26_MKDIR_FAIL parent=%lu name=%pd result=%d\n",
+		       parent ? parent->i_ino : 0, dentry, result);
+	if (result == -EPERM)
+		printk(KERN_ERR
+		       "BUMRUSH26_MKDIR_EPERM parent=%lu name=%pd\n",
+		       parent ? parent->i_ino : 0, dentry);
+	return result;
 }
 
 /**
@@ -562,12 +578,14 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 	file_plugin *obj_fplug;	/* object plugin on the new object */
 	struct inode *object;	/* new object */
 	reiser4_block_nr reserve;
+	int trace_mkdir;
 
 	reiser4_dir_entry_desc entry;	/* new directory entry */
 
 	assert("nikita-1420", data != NULL);
 	parent = data->parent;
 	dentry = data->dentry;
+	trace_mkdir = data->id == DIRECTORY_FILE_PLUGIN_ID;
 
 	assert("nikita-1418", parent != NULL);
 	assert("nikita-1419", dentry != NULL);
@@ -582,6 +600,11 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 
 	result = 0;
 	obj_fplug = file_plugin_by_id((int)data->id);
+	if (trace_mkdir)
+		printk(KERN_ERR
+		       "BUMRUSH26_MKDIR_PLUGIN requested_id=%u file_plugin=%p label=%s\n",
+		       data->id, obj_fplug,
+		       obj_fplug && obj_fplug->h.label ? obj_fplug->h.label : "<none>");
 	if (obj_fplug == NULL) {
 		warning("nikita-430", "Cannot find plugin %i", data->id);
 		return RETERR(-ENOENT);
@@ -615,8 +638,15 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 	 */
 	obj_fplug = inode_file_plugin(object);
 
-	if (obj_fplug->create_object == NULL)
+	if (obj_fplug->create_object == NULL) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_EPERM missing create_object plugin_id=%u label=%s ino=%lu\n",
+			       obj_fplug->h.id,
+			       obj_fplug->h.label ? obj_fplug->h.label : "<none>",
+			       object->i_ino);
 		return RETERR(-EPERM);
+	}
 
 	/* if any of hash, tail, sd or permission plugins for newly created
 	   object are not set yet set them here inheriting them from parent
@@ -645,12 +675,29 @@ static int do_create_vfs_child(reiser4_object_create_data * data,/* parameters
 
 	/* obtain directory plugin (if any) for new object. */
 	obj_dplug = inode_dir_plugin(object);
-	if (obj_dplug != NULL && obj_dplug->init == NULL)
+	if (trace_mkdir)
+		printk(KERN_ERR
+		       "BUMRUSH26_MKDIR_PLUGIN object=%lu dir_plugin=%p label=%s init=%p\n",
+		       object->i_ino, obj_dplug,
+		       obj_dplug && obj_dplug->h.label ? obj_dplug->h.label : "<none>",
+		       obj_dplug ? obj_dplug->init : NULL);
+	if (obj_dplug != NULL && obj_dplug->init == NULL) {
+		if (trace_mkdir)
+			printk(KERN_ERR
+			       "BUMRUSH26_MKDIR_EPERM missing dir init plugin_id=%u label=%s ino=%lu\n",
+			       obj_dplug->h.id,
+			       obj_dplug->h.label ? obj_dplug->h.label : "<none>",
+			       object->i_ino);
 		return RETERR(-EPERM);
+	}
 
 	reiser4_inode_data(object)->locality_id = get_inode_oid(parent);
 
 	reserve = estimate_create_vfs_object(parent, object);
+	if (trace_mkdir)
+		printk(KERN_ERR
+		       "BUMRUSH26_MKDIR_ESTIMATE parent=%lu object=%lu create_reserve=%llu\n",
+		       parent->i_ino, object->i_ino, (unsigned long long)reserve);
 	if (reiser4_grab_space(reserve, BA_CAN_COMMIT)) {
 		return RETERR(-ENOSPC);
 	}

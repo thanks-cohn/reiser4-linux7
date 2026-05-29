@@ -310,6 +310,9 @@ int reiser4_dir_init_common(struct inode *object,	/* new directory */
 	assert("nikita-687", object->i_mode & S_IFDIR);
 
 	reserve = estimate_init(parent, object);
+	printk(KERN_ERR
+	       "BUMRUSH26_MKDIR_ESTIMATE dir_init parent=%lu object=%lu reserve=%llu\n",
+	       parent->i_ino, object->i_ino, (unsigned long long)reserve);
 	if (reiser4_grab_space(reserve, BA_CAN_COMMIT))
 		return RETERR(-ENOSPC);
 
@@ -513,6 +516,10 @@ estimate_init(struct inode *parent, struct inode *object)
 	res += inode_dir_plugin(object)->estimate.add_entry(object);
 	/* reiser4_add_nlink(parent) */
 	res += inode_file_plugin(parent)->estimate.update(parent);
+
+	printk(KERN_ERR
+	       "BUMRUSH26_MKDIR_ESTIMATE estimate_init parent=%lu object=%lu res=%llu\n",
+	       parent->i_ino, object->i_ino, (unsigned long long)res);
 
 	return res;
 }
