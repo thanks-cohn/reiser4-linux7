@@ -216,6 +216,7 @@ static void reiser4_evict_inode(struct inode *inode)
 {
 	reiser4_context *ctx;
 	file_plugin *fplug;
+	int ret;
 
 	ctx = reiser4_init_context(inode->i_sb);
 	if (IS_ERR(ctx)) {
@@ -230,7 +231,8 @@ static void reiser4_evict_inode(struct inode *inode)
 	}
 
 	printk(KERN_ERR
-	       "REISER4_EVICT ino=%lu state=0x%lx nlink=%u count=%d mapping=%p nrpages=%lu private=%p\n",
+	       "REISER4_EVICT ino=%lu state=0x%lx nlink=%u count=%d "
+	       "mapping=%p nrpages=%lu private=%p\n",
 	       inode->i_ino,
 	       inode->i_state,
 	       inode->i_nlink,
@@ -239,28 +241,46 @@ static void reiser4_evict_inode(struct inode *inode)
 	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL,
 	       inode->i_private);
 
-	filemap_write_and_wait(&inode->i_data);
+	ret = filemap_write_and_wait(&inode->i_data);
+	if (ret != 0)
+		printk(KERN_ERR
+		       "BUMRUSH26_WRITEBACK_ERR ino=%lu ret=%d nrpages=%lu\n",
+		       inode->i_ino,
+		       ret,
+		       inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
 
-printk(KERN_ERR
-"BUMRUSH26_WRITEBACK_DONE ino=%lu nrpages=%lu\n",
-inode->i_ino,
-inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+	printk(KERN_ERR
+	       "BUMRUSH26_WRITEBACK_DONE ino=%lu nrpages=%lu\n",
+	       inode->i_ino,
+	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
 
-truncate_inode_pages(&inode->i_data, 0);
+	truncate_inode_pages(&inode->i_data, 0);
 
-printk(KERN_ERR
-"BUMRUSH26_TRUNCATE_PAGES ino=%lu nrpages=%lu\n",
-inode->i_ino,
-inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+	printk(KERN_ERR
+	       "BUMRUSH26_TRUNCATE_PAGES ino=%lu nrpages=%lu\n",
+	       inode->i_ino,
+	       inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
 
-invalidate_mapping_pages(inode->i_mapping, 0, -1);
+	if (inode->i_mapping != NULL) {
+		invalidate_mapping_pages(inode->i_mapping, 0, -1);
 
-printk(KERN_ERR
-"BUMRUSH26_INVALIDATE_MAPPING ino=%lu nrpages=%lu\n",
-inode->i_ino,
-inode->i_mapping ? inode->i_mapping->nrpages : 0UL);
+		printk(KERN_ERR
+		       "BUMRUSH26_INVALIDATE_MAPPING ino=%lu nrpages=%lu\n",
+		       inode->i_ino,
+		       inode->i_mapping->nrpages);
 
-truncate_inode_pages_final(&inode->i_data);
+		if (inode->i_mapping->nrpages != 0) {
+			ret = invalidate_inode_pages2_range(inode->i_mapping,
+							  0, (pgoff_t)-1);
+			printk(KERN_ERR
+			       "BUMRUSH26_INVALIDATE2 ino=%lu ret=%d nrpages=%lu\n",
+			       inode->i_ino,
+			       ret,
+			       inode->i_mapping->nrpages);
+		}
+	}
+
+	truncate_inode_pages_final(&inode->i_data);
 
 	printk(KERN_ERR
 	       "REISER4_POST_TRUNCATE ino=%lu state=0x%lx nrpages=%lu\n",
@@ -271,7 +291,8 @@ truncate_inode_pages_final(&inode->i_data);
 	invalidate_inode_buffers(inode);
 
 	printk(KERN_ERR
-	       "REISER4_POST_INVALIDATE ino=%lu state=0x%lx nlink=%u count=%d private=%p\n",
+	       "REISER4_POST_INVALIDATE ino=%lu state=0x%lx nlink=%u "
+	       "count=%d private=%p\n",
 	       inode->i_ino,
 	       inode->i_state,
 	       inode->i_nlink,
@@ -280,49 +301,44 @@ truncate_inode_pages_final(&inode->i_data);
 
 	inode->i_blocks = 0;
 
-if (inode->i_mapping &&
-    inode->i_mapping->nrpages != 0) {
+	if (inode->i_mapping && inode->i_mapping->nrpages != 0) {
+		struct folio *folio;
 
-{
-struct folio *folio;
+		folio = filemap_get_folio(inode->i_mapping, 0);
+		if (IS_ERR(folio)) {
+			printk(KERN_ERR
+			       "BUMRUSH26_FOLIO_ERR ino=%lu err=%ld nrpages=%lu\n",
+			       inode->i_ino,
+			       PTR_ERR(folio),
+			       inode->i_mapping->nrpages);
+			folio = NULL;
+		}
 
-folio = filemap_get_folio(inode->i_mapping, 0);
+		printk(KERN_ERR
+		       "BUMRUSH26_EVICT refusing clear_inode ino=%lu nrpages=%lu "
+		       "private=%p state=0x%lx folio=%p dirty=%d writeback=%d "
+		       "private_folio=%d mapped=%d refs=%d\n",
+		       inode->i_ino,
+		       inode->i_mapping->nrpages,
+		       inode->i_private,
+		       inode->i_state,
+		       folio,
+		       folio ? folio_test_dirty(folio) : -1,
+		       folio ? folio_test_writeback(folio) : -1,
+		       folio ? folio_test_private(folio) : -1,
+		       folio ? folio_mapped(folio) : -1,
+		       folio ? folio_ref_count(folio) : -1);
 
-if (IS_ERR(folio)) {
+		if (folio)
+			folio_put(folio);
 
-printk(KERN_ERR
-"BUMRUSH26_FOLIO_ERR ino=%lu err=%ld nrpages=%lu\n",
-inode->i_ino,
-PTR_ERR(folio),
-inode->i_mapping->nrpages);
+		/* TEMPORARY LINUX 6.8 PORT SAFETY */
+		reiser4_exit_context(ctx);
+		return;
+	}
 
-folio = NULL;
-}
-
-printk(KERN_ERR
-"BUMRUSH26_EVICT refusing clear_inode ino=%lu nrpages=%lu private=%p state=0x%lx folio=%p dirty=%d writeback=%d private_folio=%d mapped=%d refs=%d\n",
-inode->i_ino,
-inode->i_mapping->nrpages,
-inode->i_private,
-inode->i_state,
-folio,
-folio ? folio_test_dirty(folio) : -1,
-folio ? folio_test_writeback(folio) : -1,
-folio ? folio_test_private(folio) : -1,
-folio ? folio_mapped(folio) : -1,
-folio ? folio_ref_count(folio) : -1);
-
-if (folio)
-folio_put(folio);
-}
-
-/* TEMPORARY LINUX 6.8 PORT SAFETY */
-reiser4_exit_context(ctx);
-return;
-}
-
-clear_inode(inode);
-reiser4_exit_context(ctx);
+	clear_inode(inode);
+	reiser4_exit_context(ctx);
 }
 
 /**
