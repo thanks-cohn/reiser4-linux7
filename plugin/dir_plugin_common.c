@@ -13,6 +13,16 @@ int reiser4_lookup_name(struct inode *parent, struct dentry *dentry,
 			reiser4_key * key);
 void check_light_weight(struct inode *inode, struct inode *parent);
 
+static void reiser4_init_private_dentry(struct dentry *dentry,
+					struct inode *inode,
+					const char *name, unsigned int len)
+{
+	memset(dentry, 0, sizeof(*dentry));
+	dentry->d_inode = inode;
+	dentry->d_name.name = name;
+	dentry->d_name.len = len;
+}
+
 /* this is common implementation of get_parent method of dir plugin
    this is used by NFS kernel server to "climb" up directory tree to
    check permissions
@@ -31,7 +41,7 @@ struct dentry *get_parent_common(struct inode *child)
 	 */
 
 	s = child->i_sb;
-	memset(&dotdot, 0, sizeof(dotdot)); /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
+	reiser4_init_private_dentry(&dotdot, child, "..", 2);
 	dotdot.d_op = &get_super_private(s)->ops.dentry;
 
 	result = reiser4_lookup_name(child, &dotdot, &key);
@@ -344,8 +354,8 @@ int reiser4_dir_done_common(struct inode *object/* object being deleted */)
 	if (reiser4_grab_space(reserve, BA_CAN_COMMIT | BA_RESERVED))
 		return RETERR(-ENOSPC);
 
-	memset(&goodby_dots, 0, sizeof goodby_dots);
-	entry.obj = goodby_dots.d_inode = object; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
+	reiser4_init_private_dentry(&goodby_dots, object, ".", 1);
+	entry.obj = object;
 	result = reiser4_rem_entry_common(object, &goodby_dots, &entry);
 	reiser4_free_dentry_fsdata(&goodby_dots);
 	if (unlikely(result != 0 && result != -ENOMEM && result != -ENOENT))
@@ -371,8 +381,8 @@ int reiser4_detach_common(struct inode *object, struct inode *parent)
 	/* NOTE-NIKITA this only works if @parent is -the- parent of
 	   @object, viz. object whose key is stored in dotdot
 	   entry. Wouldn't work with hard-links on directories. */
-	memset(&goodby_dots, 0, sizeof goodby_dots);
-	entry.obj = goodby_dots.d_inode = parent; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
+	reiser4_init_private_dentry(&goodby_dots, parent, "..", 2);
+	entry.obj = parent;
 	result = reiser4_rem_entry_common(object, &goodby_dots, &entry);
 	reiser4_free_dentry_fsdata(&goodby_dots);
 	if (result == 0) {
@@ -553,15 +563,16 @@ static int create_dot_dotdot(struct inode *object/* object to create dot and
 	 */
 
 	memset(&entry, 0, sizeof entry);
-	memset(&dots_entry, 0, sizeof dots_entry);
-	entry.obj = dots_entry.d_inode = object; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
+	reiser4_init_private_dentry(&dots_entry, object, ".", 1);
+	entry.obj = object;
 	result = reiser4_add_entry_common(object, &dots_entry, NULL, &entry);
 	reiser4_free_dentry_fsdata(&dots_entry);
 
 	if (result == 0) {
 		result = reiser4_add_nlink(object, object, 0);
 		if (result == 0) {
-			entry.obj = dots_entry.d_inode = parent; /* Linux 7.x: d_name.name readonly */ /* Linux 7.x: d_name.len readonly */
+			reiser4_init_private_dentry(&dots_entry, parent, "..", 2);
+			entry.obj = parent;
 			result = reiser4_add_entry_common(object,
 						  &dots_entry, NULL, &entry);
 			reiser4_free_dentry_fsdata(&dots_entry);

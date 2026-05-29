@@ -610,8 +610,8 @@ int reiser4_rename2_common(struct mnt_idmap *idmap,
 			memset(dotdot_entry, 0, sizeof(*dotdot_entry));
 			dotdot_entry->obj = old_dir;
 			memset(dotdot_name, 0, sizeof(*dotdot_name));
-			/* Linux 7.x: d_name.name readonly */
-			/* Linux 7.x: d_name.len readonly */
+			dotdot_name->d_name.name = "..";
+			dotdot_name->d_name.len = 2;
 			/*
 			 * allocate ->d_fsdata on the stack to avoid using
 			 * reiser4_get_dentry_fsdata(). Locking is not needed,
