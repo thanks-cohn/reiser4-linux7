@@ -732,7 +732,7 @@ static int write_jnodes_to_disk_extent(
 	const reiser4_block_nr *block_p, flush_queue_t *fq, int flags)
 {
 	reiser4_context *ctx = get_current_context_check();
-	struct block_device *bdev = reiser4_get_super_bdev(super);
+	struct block_device *bdev;
 	int op_flags = (flags & WRITEOUT_FLUSH_FUA) ? REQ_PREFLUSH | REQ_FUA : 0;
 	jnode *cur = first;
 	reiser4_block_nr block;
@@ -741,11 +741,41 @@ static int write_jnodes_to_disk_extent(
 	assert("zam-572", block_p != NULL);
 	assert("zam-570", nr > 0);
 
-	if (unlikely(super == NULL || bdev == NULL)) {
+	if (unlikely(super == NULL)) {
 		printk(KERN_ERR
-		       "reiser4: refusing writeout extent without super/bdev "
-		       "super=%p bdev=%p first=%p nr=%d\n",
-		       super, bdev, first, nr);
+		       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+		       "super=NULL first=%p nr=%d block_p=%p fq=%p flags=0x%x\n",
+		       first, nr, block_p, fq, flags);
+		return RETERR(-EIO);
+	}
+	if (unlikely(first == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+		       "first=NULL super=%p nr=%d block_p=%p fq=%p flags=0x%x\n",
+		       super, nr, block_p, fq, flags);
+		return RETERR(-EIO);
+	}
+	if (unlikely(block_p == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+		       "block_p=NULL super=%p first=%p nr=%d fq=%p flags=0x%x\n",
+		       super, first, nr, fq, flags);
+		return RETERR(-EIO);
+	}
+	if (unlikely(nr <= 0)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnodes_to_disk_extent bad extent: "
+		       "nr=%d super=%p first=%p block_p=%p fq=%p flags=0x%x\n",
+		       nr, super, first, block_p, fq, flags);
+		return RETERR(-EIO);
+	}
+
+	bdev = reiser4_get_super_bdev(super);
+	if (unlikely(bdev == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+		       "bdev=NULL super=%p s_bdev=%p s_fs_info=%p first=%p nr=%d\n",
+		       super, super->s_bdev, super->s_fs_info, first, nr);
 		return RETERR(-EIO);
 	}
 	if (unlikely(ctx == NULL || ctx->super != super))
@@ -769,10 +799,43 @@ static int write_jnodes_to_disk_extent(
 		bio_set_dev(bio, bdev);
 		bio->bi_iter.bi_sector = block * (super->s_blocksize >> 9);
 		for (nr_used = 0, i = 0; i < nr_blocks; i++) {
+			struct address_space *mapping;
 			struct page *pg;
 
+			if (unlikely(cur == NULL)) {
+				printk(KERN_ERR
+				       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+				       "cur=NULL first=%p nr_remaining=%d nr_used=%d "
+				       "super=%p block=%llu\n",
+				       first, nr, nr_used, super,
+				       (unsigned long long)block);
+				bio_put(bio);
+				return RETERR(-EIO);
+			}
+
 			pg = jnode_page(cur);
+			if (unlikely(pg == NULL)) {
+				printk(KERN_ERR
+				       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+				       "cur->pg=NULL cur=%p first=%p nr_remaining=%d "
+				       "nr_used=%d super=%p block=%llu\n",
+				       cur, first, nr, nr_used, super,
+				       (unsigned long long)block);
+				bio_put(bio);
+				return RETERR(-EIO);
+			}
 			assert("zam-573", pg != NULL);
+
+			mapping = jnode_get_mapping(cur);
+			if (unlikely(mapping == NULL)) {
+				printk(KERN_ERR
+				       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+				       "jnode_get_mapping(cur)=NULL cur=%p pg=%p "
+				       "first=%p nr_remaining=%d nr_used=%d super=%p\n",
+				       cur, pg, first, nr, nr_used, super);
+				bio_put(bio);
+				return RETERR(-EIO);
+			}
 
 			get_page(pg);
 
@@ -789,8 +852,7 @@ static int write_jnodes_to_disk_extent(
 			}
 
 			spin_lock_jnode(cur);
-			assert("nikita-3166",
-			       pg->mapping == jnode_get_mapping(cur));
+			assert("nikita-3166", pg->mapping == mapping);
 			assert("zam-912", !JF_ISSET(cur, JNODE_WRITEBACK));
 #if REISER4_DEBUG
 			spin_lock(&cur->load);
@@ -818,12 +880,29 @@ static int write_jnodes_to_disk_extent(
 
 			if (ctx && ctx->entd) {
 				/* this is ent thread */
-				entd_context *ent = get_entd_context(super);
+				entd_context *ent;
 				struct wbq *rq, *next;
+
+				if (unlikely(super->s_fs_info == NULL)) {
+					printk_once(KERN_ERR
+					       "reiser4: write_jnodes_to_disk_extent NULL pointer: "
+					       "super->s_fs_info=NULL while ctx->entd=1 "
+					       "super=%p pg=%p cur=%p; skipping only entd "
+					       "request accounting\n",
+					       super, pg, cur);
+					goto entd_accounted;
+				}
+				ent = get_entd_context(super);
 
 				spin_lock(&ent->guard);
 
-				if (pg == ent->cur_request->page) {
+				if (ent->cur_request == NULL) {
+					printk_once(KERN_INFO
+					       "reiser4: write_jnodes_to_disk_extent: "
+					       "ent->cur_request is absent super=%p pg=%p cur=%p; "
+					       "continuing writeout without current entd request\n",
+					       super, pg, cur);
+				} else if (pg == ent->cur_request->page) {
 					/*
 					 * entd is called for this page. This
 					 * request is not in th etodo list
@@ -855,6 +934,7 @@ static int write_jnodes_to_disk_extent(
 				}
 				spin_unlock(&ent->guard);
 			}
+entd_accounted:
 
 			clear_page_dirty_for_io(pg);
 
@@ -898,21 +978,87 @@ write_jnode_list(struct super_block *super, struct list_head *head,
 		 flush_queue_t *fq, long *nr_submitted, int flags)
 {
 	int ret;
-	jnode *beg = list_entry(head->next, jnode, capture_link);
+	jnode *beg;
+
+	if (unlikely(super == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnode_list NULL pointer: "
+		       "super=NULL head=%p fq=%p flags=0x%x\n",
+		       head, fq, flags);
+		return RETERR(-EIO);
+	}
+	if (unlikely(head == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnode_list NULL pointer: "
+		       "head=NULL super=%p fq=%p flags=0x%x\n",
+		       super, fq, flags);
+		return RETERR(-EIO);
+	}
+	if (list_empty_careful(head))
+		return 0;
+	if (unlikely(head->next == NULL || head->prev == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: write_jnode_list NULL pointer: "
+		       "head link is NULL head=%p next=%p prev=%p "
+		       "super=%p fq=%p flags=0x%x\n",
+		       head, head->next, head->prev, super, fq, flags);
+		return RETERR(-EIO);
+	}
+
+	beg = list_entry(head->next, jnode, capture_link);
 
 	while (head != &beg->capture_link) {
+		const reiser4_block_nr *beg_block;
 		int nr = 1;
-		jnode *cur = list_entry(beg->capture_link.next, jnode, capture_link);
+		jnode *cur;
+
+		if (unlikely(beg == NULL)) {
+			printk(KERN_ERR
+			       "reiser4: write_jnode_list NULL pointer: "
+			       "beg=NULL head=%p super=%p fq=%p flags=0x%x\n",
+			       head, super, fq, flags);
+			return RETERR(-EIO);
+		}
+		beg_block = jnode_get_block(beg);
+		if (unlikely(beg_block == NULL)) {
+			printk(KERN_ERR
+			       "reiser4: write_jnode_list NULL pointer: "
+			       "jnode_get_block(beg)=NULL beg=%p head=%p "
+			       "super=%p fq=%p flags=0x%x\n",
+			       beg, head, super, fq, flags);
+			return RETERR(-EIO);
+		}
+
+		cur = list_entry(beg->capture_link.next, jnode, capture_link);
 
 		while (head != &cur->capture_link) {
-			if (*jnode_get_block(cur) != *jnode_get_block(beg) + nr)
+			const reiser4_block_nr *cur_block;
+
+			if (unlikely(cur == NULL)) {
+				printk(KERN_ERR
+				       "reiser4: write_jnode_list NULL pointer: "
+				       "cur=NULL beg=%p head=%p super=%p "
+				       "fq=%p flags=0x%x\n",
+				       beg, head, super, fq, flags);
+				return RETERR(-EIO);
+			}
+			cur_block = jnode_get_block(cur);
+			if (unlikely(cur_block == NULL)) {
+				printk(KERN_ERR
+				       "reiser4: write_jnode_list NULL pointer: "
+				       "jnode_get_block(cur)=NULL cur=%p beg=%p "
+				       "head=%p super=%p fq=%p flags=0x%x\n",
+				       cur, beg, head, super, fq, flags);
+				return RETERR(-EIO);
+			}
+			if (*cur_block != *beg_block + nr)
 				break;
 			++nr;
 			cur = list_entry(cur->capture_link.next, jnode, capture_link);
 		}
 
 		ret = write_jnodes_to_disk_extent(
-			super, beg, nr, jnode_get_block(beg), fq, flags);
+			super, beg, nr, beg_block, fq, flags);
 		if (ret)
 			return ret;
 
