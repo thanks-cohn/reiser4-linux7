@@ -94,7 +94,7 @@ static int discard_extent(txn_atom *atom UNUSED_ARG,
                           void *data UNUSED_ARG)
 {
 	struct super_block *sb = reiser4_get_current_sb();
-	struct block_device *bdev = sb->s_bdev;
+	struct block_device *bdev = reiser4_get_super_bdev(sb);
 
 	sector_t extent_start_sec, extent_len_sec;
 

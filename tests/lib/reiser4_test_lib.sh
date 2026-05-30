@@ -210,7 +210,7 @@ r4_make_image() {
 	local image=${1:?image} size=${2:-128M}
 	rm -f "${image}"
 	truncate -s "${size}" "${image}" || return 1
-	mkfs.reiser4 -f "${image}"
+	mkfs.reiser4 -y -f "${image}"
 }
 
 r4_mount_new_image() {
@@ -416,7 +416,7 @@ r4_v6_mount_image() {
 	local image=${1:?image} mnt=${2:?mnt} size=${3:-256M}
 	rm -f "${image}"; mkdir -p "${mnt}"
 	truncate -s "${size}" "${image}" || return 1
-	mkfs.reiser4 -f "${image}" >"${ARTIFACT_DIR}/mkfs-$(basename "${image}").log" 2>&1 || return 2
+	mkfs.reiser4 -y -f "${image}" >"${ARTIFACT_DIR}/mkfs-$(basename "${image}").log" 2>&1 || return 2
 	if ! r4_module_loaded; then insmod ./reiser4.ko || return 3; fi
 	mount -t reiser4 -o loop "${image}" "${mnt}" || return 4
 }

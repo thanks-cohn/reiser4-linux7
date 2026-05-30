@@ -17,9 +17,7 @@ rm -f /tmp/reiser4-v1-smoke.img
 truncate -s 128M /tmp/reiser4-v1-smoke.img || exit 1
 
 echo "[3/8] formatting"
-mkfs.reiser4 -f /tmp/reiser4-v1-smoke.img <<MKFSYES
-Yes
-MKFSYES
+mkfs.reiser4 -y -f /tmp/reiser4-v1-smoke.img
 
 echo "[4/8] loop setup"
 sudo losetup -fP /tmp/reiser4-v1-smoke.img || exit 1

@@ -133,6 +133,9 @@ struct reiser4_super_info_data {
 	/* space manager plugin */
 	reiser4_space_allocator space_allocator;
 
+	/* Stable block device pointer captured at mount for teardown writeout. */
+	struct block_device *bdev;
+
 	/* transaction model */
 	reiser4_txmod_id txmod;
 
@@ -320,6 +323,19 @@ static inline reiser4_super_info_data *get_super_private(const struct
 static inline entd_context *get_entd_context(struct super_block *super)
 {
 	return &get_super_private(super)->entd;
+}
+
+static inline struct block_device *
+reiser4_get_super_bdev(struct super_block *super)
+{
+	reiser4_super_info_data *sbinfo;
+
+	if (super == NULL)
+		return NULL;
+	if (super->s_bdev != NULL)
+		return super->s_bdev;
+	sbinfo = get_super_private(super);
+	return sbinfo ? sbinfo->bdev : NULL;
 }
 
 /* "Current" super-block: main super block used during current system

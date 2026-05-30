@@ -131,7 +131,7 @@ echo 'SMOKE_PREFLIGHT_PASS'
 
 rm -f "${IMAGE}"
 truncate -s "${SIZE}" "${IMAGE}" || fail_now mkfs "SMOKE_MKFS_FAIL stage=truncate image=\"${IMAGE}\""
-if ! out=$(mkfs.reiser4 -f "${IMAGE}" 2>&1); then
+if ! out=$(mkfs.reiser4 -y -f "${IMAGE}" 2>&1); then
 	printf '%s\n' "${out}" >"${ARTIFACT_DIR}/mkfs.log"
 	fail_now mkfs "SMOKE_MKFS_FAIL error=\"$(r4_quote_msg "${out}")\""
 fi

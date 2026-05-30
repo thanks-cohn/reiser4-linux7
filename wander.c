@@ -205,7 +205,8 @@ do { \
 #include <linux/blkdev.h>
 
 static int write_jnodes_to_disk_extent(
-	jnode *, int, const reiser4_block_nr *, flush_queue_t *, int);
+	struct super_block *, jnode *, int, const reiser4_block_nr *,
+	flush_queue_t *, int);
 
 /* The commit_handle is a container for objects needed at atom commit time  */
 struct commit_handle {
@@ -444,7 +445,8 @@ static int update_journal_header(struct commit_handle *ch)
 
 	format_journal_header(ch);
 
-	ret = write_jnodes_to_disk_extent(jh, 1, jnode_get_block(jh), NULL,
+	ret = write_jnodes_to_disk_extent(ch->super, jh, 1,
+					  jnode_get_block(jh), NULL,
 					  WRITEOUT_FLUSH_FUA);
 	if (ret)
 		return ret;
@@ -475,7 +477,8 @@ static int update_journal_footer(struct commit_handle *ch)
 
 	format_journal_footer(ch);
 
-	ret = write_jnodes_to_disk_extent(jf, 1, jnode_get_block(jf), NULL,
+	ret = write_jnodes_to_disk_extent(ch->super, jf, 1,
+					  jnode_get_block(jf), NULL,
 					  WRITEOUT_FLUSH_FUA);
 	if (ret)
 		return ret;
@@ -725,10 +728,11 @@ static int get_overwrite_set(struct commit_handle *ch)
  * Why that layer needed? Why BIOs cannot be constructed here?
  */
 static int write_jnodes_to_disk_extent(
-	jnode *first, int nr, const reiser4_block_nr *block_p,
-	flush_queue_t *fq, int flags)
+	struct super_block *super, jnode *first, int nr,
+	const reiser4_block_nr *block_p, flush_queue_t *fq, int flags)
 {
-	struct super_block *super = reiser4_get_current_sb();
+	reiser4_context *ctx = get_current_context_check();
+	struct block_device *bdev = reiser4_get_super_bdev(super);
 	int op_flags = (flags & WRITEOUT_FLUSH_FUA) ? REQ_PREFLUSH | REQ_FUA : 0;
 	jnode *cur = first;
 	reiser4_block_nr block;
@@ -736,6 +740,19 @@ static int write_jnodes_to_disk_extent(
 	assert("zam-571", first != NULL);
 	assert("zam-572", block_p != NULL);
 	assert("zam-570", nr > 0);
+
+	if (unlikely(super == NULL || bdev == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: refusing writeout extent without super/bdev "
+		       "super=%p bdev=%p first=%p nr=%d\n",
+		       super, bdev, first, nr);
+		return RETERR(-EIO);
+	}
+	if (unlikely(ctx == NULL || ctx->super != super))
+		printk_once(KERN_INFO
+		       "reiser4: writeout extent using explicit super=%p "
+		       "current_ctx=%p current_super=%p nr=%d\n",
+		       super, ctx, ctx ? ctx->super : NULL, nr);
 
 	block = *block_p;
 
@@ -749,7 +766,7 @@ static int write_jnodes_to_disk_extent(
 		if (!bio)
 			return RETERR(-ENOMEM);
 
-		bio_set_dev(bio, super->s_bdev);
+		bio_set_dev(bio, bdev);
 		bio->bi_iter.bi_sector = block * (super->s_blocksize >> 9);
 		for (nr_used = 0, i = 0; i < nr_blocks; i++) {
 			struct page *pg;
@@ -799,7 +816,7 @@ static int write_jnodes_to_disk_extent(
 			ClearPageError(pg);
 			set_page_writeback(pg);
 
-			if (get_current_context()->entd) {
+			if (ctx && ctx->entd) {
 				/* this is ent thread */
 				entd_context *ent = get_entd_context(super);
 				struct wbq *rq, *next;
@@ -877,8 +894,8 @@ static int write_jnodes_to_disk_extent(
    numbers in the given list of j-nodes and submits write requests on this
    per-sequence basis */
 int
-write_jnode_list(struct list_head *head, flush_queue_t *fq,
-		 long *nr_submitted, int flags)
+write_jnode_list(struct super_block *super, struct list_head *head,
+		 flush_queue_t *fq, long *nr_submitted, int flags)
 {
 	int ret;
 	jnode *beg = list_entry(head->next, jnode, capture_link);
@@ -895,7 +912,7 @@ write_jnode_list(struct list_head *head, flush_queue_t *fq,
 		}
 
 		ret = write_jnodes_to_disk_extent(
-			beg, nr, jnode_get_block(beg), fq, flags);
+			super, beg, nr, jnode_get_block(beg), fq, flags);
 		if (ret)
 			return ret;
 
@@ -986,7 +1003,8 @@ static int alloc_wandered_blocks(struct commit_handle *ch, flush_queue_t *fq)
 		if (ret)
 			return ret;
 
-		ret = write_jnodes_to_disk_extent(cur, len, &block, fq, 0);
+		ret = write_jnodes_to_disk_extent(ch->super, cur, len,
+						  &block, fq, 0);
 		if (ret)
 			return ret;
 
@@ -1010,14 +1028,12 @@ static int alloc_tx(struct commit_handle *ch, flush_queue_t * fq)
 	jnode *cur;
 	jnode *txhead;
 	int ret;
-	reiser4_context *ctx;
 	reiser4_super_info_data *sbinfo;
 
 	assert("zam-698", ch->tx_size > 0);
 	assert("zam-699", list_empty_careful(&ch->tx_list));
 
-	ctx = get_current_context();
-	sbinfo = get_super_private(ctx->super);
+	sbinfo = get_super_private(ch->super);
 
 	while (allocated < (unsigned)ch->tx_size) {
 		len = (ch->tx_size - allocated);
@@ -1085,8 +1101,7 @@ static int alloc_tx(struct commit_handle *ch, flush_queue_t * fq)
 		params.cur = list_entry(txhead->capture_link.next, jnode, capture_link);
 
 		params.idx = 0;
-		params.capacity =
-		    wander_record_capacity(reiser4_get_current_sb());
+		params.capacity = wander_record_capacity(ch->super);
 
 		atom = get_current_atom_locked();
 		blocknr_set_iterator(atom, &atom->wandered_map,
@@ -1102,7 +1117,7 @@ static int alloc_tx(struct commit_handle *ch, flush_queue_t * fq)
 		}
 	}
 
-	ret = write_jnode_list(&ch->tx_list, fq, NULL, 0);
+	ret = write_jnode_list(ch->super, &ch->tx_list, fq, NULL, 0);
 
 	return ret;
 
@@ -1157,7 +1172,8 @@ static int write_tx_back(struct commit_handle * ch)
 		return  PTR_ERR(fq);
 	spin_unlock_atom(fq->atom);
 	ret = write_jnode_list(
-		ch->overwrite_set, fq, NULL, WRITEOUT_FOR_PAGE_RECLAIM);
+		ch->super, ch->overwrite_set, fq, NULL,
+		WRITEOUT_FOR_PAGE_RECLAIM);
 	reiser4_fq_put(fq);
 	if (ret)
 		return ret;
@@ -1376,6 +1392,7 @@ static int replay_transaction(const struct super_block *s,
 	int ret;
 
 	init_commit_handle(&ch, NULL);
+	ch.super = (struct super_block *)s;
 	ch.overwrite_set = &overwrite_set;
 
 	restore_commit_handle(&ch, tx_head);
@@ -1473,7 +1490,7 @@ static int replay_transaction(const struct super_block *s,
 	}
 
 	{			/* write wandered set in place */
-		write_jnode_list(ch.overwrite_set, NULL, NULL, 0);
+		write_jnode_list(ch.super, ch.overwrite_set, NULL, NULL, 0);
 		ret = wait_on_jnode_list(ch.overwrite_set);
 
 		if (ret) {

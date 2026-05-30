@@ -23,6 +23,7 @@ int reiser4_init_fs_info(struct super_block *super)
 		return RETERR(-ENOMEM);
 
 	super->s_fs_info = sbinfo;
+	sbinfo->bdev = super->s_bdev;
 	super->s_op = NULL;
 
 	ON_DEBUG(INIT_LIST_HEAD(&sbinfo->all_jnodes));

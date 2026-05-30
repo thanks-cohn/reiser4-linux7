@@ -210,8 +210,8 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 run_or_fail "image creation" truncate -s "${IMG_SIZE}" "${IMG}"
-log "+ mkfs.reiser4 -f ${IMG}"
-if ! mkfs.reiser4 -f "${IMG}" <<<'Yes' >"${OUT_DIR}/mkfs.reiser4.log" 2>&1; then
+log "+ mkfs.reiser4 -y -f ${IMG}"
+if ! mkfs.reiser4 -y -f "${IMG}" >"${OUT_DIR}/mkfs.reiser4.log" 2>&1; then
 	mark_failure "mkfs.reiser4 failed"
 	exit 1
 fi

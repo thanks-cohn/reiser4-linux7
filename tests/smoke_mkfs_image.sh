@@ -13,7 +13,7 @@ r4_log MKFS_VERSION "version=\"$(mkfs.reiser4 -V 2>&1 | head -1 || true)\""
 r4_log IMAGE "path=${IMAGE}" "size=${SIZE}"
 truncate -s "${SIZE}" "${IMAGE}" || r4_fail_exit truncate SMOKE_MKFS_IMAGE_FAIL "truncate failed"
 set +e
-mkfs.reiser4 -f "${IMAGE}" >"${ARTIFACT_DIR}/mkfs.log" 2>&1
+mkfs.reiser4 -y -f "${IMAGE}" >"${ARTIFACT_DIR}/mkfs.log" 2>&1
 mkfs_rc=$?
 set -u
 r4_log MKFS_EXIT "exit_code=${mkfs_rc}"

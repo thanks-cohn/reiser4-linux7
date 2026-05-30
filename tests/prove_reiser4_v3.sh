@@ -135,8 +135,8 @@ run_root rmmod reiser4 2>/dev/null || true
 run rm -f "${IMAGE}"
 run mkdir -p "${MNT}"
 run truncate -s "${SIZE}" "${IMAGE}"
-echo "+ mkfs.reiser4 -f ${IMAGE}"
-printf 'Yes\n' | "${SUDO[@]}" mkfs.reiser4 -f "${IMAGE}"
+echo "+ mkfs.reiser4 -y -f ${IMAGE}"
+"${SUDO[@]}" mkfs.reiser4 -y -f "${IMAGE}"
 run_root insmod "${MODULE}"
 MODULE_LOADED=1
 LOOPDEV="$("${SUDO[@]}" losetup --find --show "${IMAGE}")"

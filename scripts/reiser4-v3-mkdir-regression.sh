@@ -134,8 +134,8 @@ run sudo mkdir -p "$MNT"
 run rm -f "$IMG"
 run truncate -s "$SIZE" "$IMG"
 
-log "+ mkfs.reiser4 -f $IMG"
-printf 'Yes\n' | mkfs.reiser4 -f "$IMG"
+log "+ mkfs.reiser4 -y -f $IMG"
+mkfs.reiser4 -y -f "$IMG"
 
 LOOPDEV="$(sudo losetup --find --show "$IMG")"
 log "loopdev=$LOOPDEV"

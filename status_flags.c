@@ -47,7 +47,7 @@ int reiser4_status_init(reiser4_block_nr block)
 	bio = reiser4_bio_alloc(reiser4_ctx_gfp_mask_get(), 1);
 	if (bio != NULL) {
 		bio->bi_iter.bi_sector = block * (sb->s_blocksize >> 9);
-		bio_set_dev(bio, sb->s_bdev);
+		bio_set_dev(bio, reiser4_get_super_bdev(sb));
 		bio->bi_io_vec[0].bv_page = page;
 		bio->bi_io_vec[0].bv_len = sb->s_blocksize;
 		bio->bi_io_vec[0].bv_offset = 0;
@@ -147,7 +147,7 @@ int reiser4_status_write(__u64 status, __u64 extended_status, char *message)
 
 	kunmap_atomic((char *)statuspage);
 	reiser4_bio_reset(bio);
-	bio_set_dev(bio, sb->s_bdev);
+	bio_set_dev(bio, reiser4_get_super_bdev(sb));
 	bio->bi_io_vec[0].bv_page = get_super_private(sb)->status_page;
 	bio->bi_io_vec[0].bv_len = sb->s_blocksize;
 	bio->bi_io_vec[0].bv_offset = 0;

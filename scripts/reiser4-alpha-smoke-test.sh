@@ -23,7 +23,7 @@ truncate -s "$SIZE" "$IMG" || fail "image create"
 LOOP="$(sudo losetup --find --show "$IMG")" || fail "loop setup"
 pass "loop setup"
 
-yes yes | sudo mkfs.reiser4 "$LOOP" >/dev/null || fail "mkfs"
+sudo mkfs.reiser4 -y -f "$LOOP" >/dev/null || fail "mkfs"
 pass "mkfs"
 
 sudo mkdir -p "$MNT"
