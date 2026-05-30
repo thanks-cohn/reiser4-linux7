@@ -522,10 +522,20 @@ int reiser4_write_fq(flush_queue_t *fq, long *nr_submitted, int flags)
 		reiser4_atom_wait_event(atom);
 	}
 
+	if (unlikely(atom->super == NULL)) {
+		printk(KERN_ERR
+		       "reiser4: reiser4_write_fq NULL pointer: "
+		       "atom->super=NULL fq=%p atom=%p flags=0x%x\n",
+		       fq, atom, flags);
+		spin_unlock_atom(atom);
+		return RETERR(-EIO);
+	}
+
 	atom->nr_running_queues++;
 	spin_unlock_atom(atom);
 
-	ret = write_jnode_list(ATOM_FQ_LIST(fq), fq, nr_submitted, flags);
+	ret = write_jnode_list(atom->super, ATOM_FQ_LIST(fq), fq,
+			       nr_submitted, flags);
 	release_prepped_list(fq);
 
 	return ret;
