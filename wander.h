@@ -119,7 +119,7 @@ extern int reiser4_journal_recover_sb_data(struct super_block *);
 extern int reiser4_init_journal_info(struct super_block *);
 extern void reiser4_done_journal_info(struct super_block *);
 
-extern int write_jnode_list(struct list_head *, flush_queue_t *, long *, int);
+extern int write_jnode_list(struct super_block *, struct list_head *, flush_queue_t *, long *, int);
 
 #endif				/* __FS_REISER4_WANDER_H__ */
 

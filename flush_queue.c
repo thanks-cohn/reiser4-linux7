@@ -525,7 +525,7 @@ int reiser4_write_fq(flush_queue_t *fq, long *nr_submitted, int flags)
 	atom->nr_running_queues++;
 	spin_unlock_atom(atom);
 
-	ret = write_jnode_list(ATOM_FQ_LIST(fq), fq, nr_submitted, flags);
+	ret = write_jnode_list(reiser4_get_current_sb(), ATOM_FQ_LIST(fq), fq, nr_submitted, flags);
 	release_prepped_list(fq);
 
 	return ret;
