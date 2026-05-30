@@ -8,7 +8,7 @@ sudo rm -f "$IMG"
 sudo mkdir -p "$MNT"
 
 dd if=/dev/zero of="$IMG" bs=1M count=512 status=none
-mkfs.reiser4 -f "$IMG" <<<'Yes'
+mkfs.reiser4 -y -f "$IMG"
 
 sudo mount -o loop -t reiser4 "$IMG" "$MNT"
 

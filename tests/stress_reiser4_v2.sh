@@ -70,7 +70,7 @@ run_root rmmod reiser4 2>/dev/null || true
 run rm -f "${IMAGE}"
 run mkdir -p "${MNT}"
 run truncate -s "${SIZE}" "${IMAGE}"
-run_root mkfs.reiser4 -f "${IMAGE}"
+run_root mkfs.reiser4 -y -f "${IMAGE}"
 run_root insmod "${MODULE}"
 MODULE_LOADED=1
 run_root mount -t reiser4 -o loop "${IMAGE}" "${MNT}"

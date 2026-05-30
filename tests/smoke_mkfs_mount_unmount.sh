@@ -30,7 +30,7 @@ command -v mkfs.reiser4 >/dev/null 2>&1 || fail_stage preflight 'SMOKE_PREFLIGHT
 mkdir -p "${MNT}" || fail_stage preflight "SMOKE_PREFLIGHT_FAIL mkdir_mountpoint=1 path=\"${MNT}\""
 echo 'SMOKE_PREFLIGHT_PASS'
 rm -f "${IMAGE}"; truncate -s "${SIZE}" "${IMAGE}" || fail_stage mkfs "SMOKE_MKFS_FAIL stage=truncate image=\"${IMAGE}\""
-if ! out=$(mkfs.reiser4 -f "${IMAGE}" 2>&1); then printf '%s\n' "${out}" >"${ARTIFACT_DIR}/mkfs.log"; fail_stage mkfs "SMOKE_MKFS_FAIL error=\"$(r4_quote_msg "${out}")\""; fi; printf '%s\n' "${out}" >"${ARTIFACT_DIR}/mkfs.log"; echo 'SMOKE_MKFS_PASS'
+if ! out=$(mkfs.reiser4 -y -f "${IMAGE}" 2>&1); then printf '%s\n' "${out}" >"${ARTIFACT_DIR}/mkfs.log"; fail_stage mkfs "SMOKE_MKFS_FAIL error=\"$(r4_quote_msg "${out}")\""; fi; printf '%s\n' "${out}" >"${ARTIFACT_DIR}/mkfs.log"; echo 'SMOKE_MKFS_PASS'
 if ! out=$(insmod ./reiser4.ko 2>&1); then fail_stage insmod "SMOKE_INSMOD_FAIL error=\"$(r4_quote_msg "${out}")\""; fi; echo 'SMOKE_INSMOD_PASS'
 if ! out=$(mount -t reiser4 -o loop "${IMAGE}" "${MNT}" 2>&1); then fail_stage mount "SMOKE_MOUNT_FAIL error=\"$(r4_quote_msg "${out}")\""; fi; echo 'SMOKE_MOUNT_PASS'
 stat "${MNT}" >"${ARTIFACT_DIR}/root-stat.txt" 2>&1 || fail_stage root_stat 'SMOKE_ROOT_STAT_FAIL'; echo 'SMOKE_ROOT_STAT_PASS'
